@@ -9,8 +9,12 @@ jobs:
         run: |
           git clone https://github.com/uet-app-distributor/template-generator.git
           cd template-generator
+          ls -la
       - name: Generate files
         run: |
+          ls -la
+          cd template-generator
+          ls -la
           pip install -r requirement.txt
           python3 main.py sample-app-config.yaml
           cat sample*
