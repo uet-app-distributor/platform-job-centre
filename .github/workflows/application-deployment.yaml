@@ -11,6 +11,6 @@ jobs:
           cd template-generator
       - name: Generate files
         run: |
-          pip install -r requirement
+          pip install -r requirement.txt
           python3 main.py sample-app-config.yaml
           cat sample*
