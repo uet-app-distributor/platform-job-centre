@@ -2,12 +2,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  log-the-inputs:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repositories
         run: |
-          git clone git@github.com:uet-app-distributor/template-generator.git
+          git clone https://github.com/uet-app-distributor/template-generator.git
           cd template-generator
       - name: Generate files
         run: |
