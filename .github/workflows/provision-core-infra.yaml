@@ -19,6 +19,7 @@ jobs:
 
       - name: Terraform Plan remote backend bucket
         run: |
+          ls -la
           cd ${{ env.TERRAFORM_REMOTE_STATE_REPO }}
           terraform init
           terraform validate
@@ -38,6 +39,7 @@ jobs:
           terraform plan
   
   deploy-platform-infrastructure:
+    needs: deploy-remote-backend-bucket
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout terraform-live-repo
