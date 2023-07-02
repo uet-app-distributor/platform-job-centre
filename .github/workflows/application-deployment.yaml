@@ -1,12 +1,18 @@
 on:
   workflow_dispatch:
-
+    inputs:
+      app_blob:
+        description: "Blob object for app configuration on Google Cloud Storage."
+        type: string
+        required: true
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repositories
         run: |
+          ls -la
+          echo '${{ inputs.app_blob }}''
           git clone https://github.com/uet-app-distributor/template-generator.git
           cd template-generator
           ls -la
@@ -15,6 +21,6 @@ jobs:
           ls -la
           cd template-generator
           ls -la
-          pip install -r requirement.txt
-          python3 main.py sample-app-config.yaml
-          cat sample*
+#         pip install -r requirement.txt
+#         python3 main.py sample-app-config.yaml
+#         cat sample*
