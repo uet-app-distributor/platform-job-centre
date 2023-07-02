@@ -1,0 +1,45 @@
+on:
+  workflow_dispatch:
+
+env:
+  DEFAULT_ORG: uet-app-distributor
+  DEFAULT_REVIEWER: thai-nm
+
+jobs:
+  deploy:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          path: develop
+
+      - name: Checkout terraform-live-repo
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ env.DEFAULT_ORG }}/terraform-live-repo-remote-state
+          path: develop
+
+      - name: Checkout terraform-live-repo
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ env.DEFAULT_ORG }}/terraform-live-repo
+          path: develop
+      
+      - name: Terraform Plan remote backend bucket
+        run: |
+          - terraform validate
+          - terraform plan
+      
+      - name: Require approvals
+        uses: trstringer/manual-approval@v1
+        with:
+          secret: ${{ github.TOKEN }}
+          approvers: ${{ env.DEFAULT_REVIEWER }}
+          minimum-approvals: 1
+          issue-title: "Require approvals"
+          issue-body: "Initialize remote state backend bucket requires approvals."
+      
+      - name: Terraform Apply remote backend bucket
+        run: |
+          - terraform plan
