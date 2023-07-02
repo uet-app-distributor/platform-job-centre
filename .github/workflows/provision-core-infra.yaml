@@ -1,3 +1,5 @@
+run-name: Provision Platform Infrastructure
+
 on:
   workflow_dispatch:
 
@@ -18,19 +20,19 @@ jobs:
         with:
           repository: ${{ env.DEFAULT_ORG }}/${{ env.TERRAFORM_REMOTE_STATE_REPO }}
           ref: develop
-      
-      - id: 'auth'
-        name: 'Authenticate to Google Cloud'
-        uses: 'google-github-actions/auth@v1'
+
+      - id: "auth"
+        name: "Authenticate to Google Cloud"
+        uses: "google-github-actions/auth@v1"
         with:
           credentials_json: ${{ secrets.GOOGLE_RUNNER_CREDENTIALS }}
 
-      - name: Terraform Plan remote backend bucket
+      - name: Terraform Plan - remote backend bucket
         run: |
           terraform init
           terraform validate
           terraform plan
-      
+
       - name: Require approvals
         uses: trstringer/manual-approval@v1
         with:
@@ -38,13 +40,12 @@ jobs:
           approvers: ${{ env.DEFAULT_REVIEWER }}
           minimum-approvals: 1
           timeout-minutes: 10
-          issue-title: 'Require approvals'
-          issue-body: 'Initialize remote state backend bucket requires approvals.'
-      
-      - name: Terraform Apply remote backend bucket
-        run: |
-          terraform plan
-  
+          issue-title: "Require approvals"
+          issue-body: "Initialize remote state backend bucket requires reviewers."
+
+      - name: Terraform Apply - Remote backend bucket
+        run: terraform plan
+
   deploy-platform-infrastructure:
     needs: deploy-remote-backend-bucket
     runs-on: ubuntu-22.04
@@ -54,21 +55,28 @@ jobs:
         with:
           repository: ${{ env.DEFAULT_ORG }}/${{ env.TERRAFORM_LIVE_REPO }}
           ref: develop
-      
-      - name: Terraform Plan remote backend bucket
+
+      - id: "auth"
+        name: "Authenticate to Google Cloud"
+        uses: "google-github-actions/auth@v1"
+        with:
+          credentials_json: ${{ secrets.GOOGLE_RUNNER_CREDENTIALS }}
+
+      - name: Terraform Plan - Platform infrastructure
         run: |
           terraform init
           terraform validate
           terraform plan
-      
+
       - name: Require approvals
         uses: trstringer/manual-approval@v1
         with:
           secret: ${{ secrets.RUNNER_ACCESS_TOKEN }}
           approvers: ${{ env.DEFAULT_REVIEWER }}
-          issue-title: 'Require approvals'
-          issue-body: 'Initialize remote state backend bucket requires approvals.'
-      
-      - name: Terraform Apply remote backend bucket
-        run: |
-          terraform plan
+          minimum-approvals: 1
+          timeout-minutes: 10
+          issue-title: "Require approvals"
+          issue-body: "Provision platform infrastructure requires reviewers."
+
+      - name: Terraform Apply - Platform infrastructure
+        run: terraform plan
