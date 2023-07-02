@@ -28,8 +28,8 @@ jobs:
       
       - name: Terraform Plan remote backend bucket
         run: |
-          - terraform validate
-          - terraform plan
+          terraform validate
+          terraform plan
       
       - name: Require approvals
         uses: trstringer/manual-approval@v1
@@ -42,4 +42,4 @@ jobs:
       
       - name: Terraform Apply remote backend bucket
         run: |
-          - terraform plan
+          terraform plan
