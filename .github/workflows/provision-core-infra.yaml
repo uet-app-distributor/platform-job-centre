@@ -16,6 +16,12 @@ jobs:
         with:
           repository: ${{ env.DEFAULT_ORG }}/${{ env.TERRAFORM_REMOTE_STATE_REPO }}
           ref: develop
+      
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json: ${{ secrets.GOOGLE_RUNNER_CREDENTIALS }}
 
       - name: Terraform Plan remote backend bucket
         run: |
@@ -29,8 +35,8 @@ jobs:
           secret: ${{ github.TOKEN }}
           approvers: ${{ env.DEFAULT_REVIEWER }}
           minimum-approvals: 1
-          issue-title: "Require approvals"
-          issue-body: "Initialize remote state backend bucket requires approvals."
+          issue-title: 'Require approvals'
+          issue-body: 'Initialize remote state backend bucket requires approvals.'
       
       - name: Terraform Apply remote backend bucket
         run: |
@@ -58,8 +64,8 @@ jobs:
           secret: ${{ github.TOKEN }}
           approvers: ${{ env.DEFAULT_REVIEWER }}
           minimum-approvals: 1
-          issue-title: "Require approvals"
-          issue-body: "Initialize remote state backend bucket requires approvals."
+          issue-title: 'Require approvals'
+          issue-body: 'Initialize remote state backend bucket requires approvals.'
       
       - name: Terraform Apply remote backend bucket
         run: |
