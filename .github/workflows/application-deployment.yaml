@@ -11,7 +11,7 @@ jobs:
       - name: Clone repositories
         run: |
           ls -la
-          echo '${{ inputs.app_blob }}''
+          echo '${{ inputs.app_blob }}'
           git clone https://github.com/uet-app-distributor/template-generator.git
           cd template-generator
           ls -la
