@@ -9,6 +9,8 @@ env:
 
 jobs:
   deploy-remote-backend-bucket:
+    permissions:
+      issues: write
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout terraform-live-repo
@@ -32,9 +34,10 @@ jobs:
       - name: Require approvals
         uses: trstringer/manual-approval@v1
         with:
-          secret: ${{ github.TOKEN }}
+          secret: ${{ secrets.RUNNER_ACCESS_TOKEN }}
           approvers: ${{ env.DEFAULT_REVIEWER }}
           minimum-approvals: 1
+          timeout-minutes: 10
           issue-title: 'Require approvals'
           issue-body: 'Initialize remote state backend bucket requires approvals.'
       
