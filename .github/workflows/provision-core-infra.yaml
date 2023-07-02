@@ -28,6 +28,7 @@ jobs:
       
       - name: Terraform Plan remote backend bucket
         run: |
+          terraform init
           terraform validate
           terraform plan
       
