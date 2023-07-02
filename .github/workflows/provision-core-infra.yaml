@@ -61,9 +61,8 @@ jobs:
       - name: Require approvals
         uses: trstringer/manual-approval@v1
         with:
-          secret: ${{ github.TOKEN }}
+          secret: ${{ secrets.RUNNER_ACCESS_TOKEN }}
           approvers: ${{ env.DEFAULT_REVIEWER }}
-          minimum-approvals: 1
           issue-title: 'Require approvals'
           issue-body: 'Initialize remote state backend bucket requires approvals.'
       
