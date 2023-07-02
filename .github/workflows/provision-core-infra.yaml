@@ -19,8 +19,6 @@ jobs:
 
       - name: Terraform Plan remote backend bucket
         run: |
-          ls -la
-          cd ${{ env.TERRAFORM_REMOTE_STATE_REPO }}
           terraform init
           terraform validate
           terraform plan
@@ -50,7 +48,6 @@ jobs:
       
       - name: Terraform Plan remote backend bucket
         run: |
-          cd ${{ env.TERRAFORM_LIVE_REPO }}
           terraform init
           terraform validate
           terraform plan
