@@ -4,30 +4,51 @@ on:
 env:
   DEFAULT_ORG: uet-app-distributor
   DEFAULT_REVIEWER: thai-nm
+  TERRAFORM_LIVE_REPO: terraform-live-repo
+  TERRAFORM_REMOTE_STATE_REPO: terraform-live-repo-remote-state
 
 jobs:
-  deploy:
+  deploy-remote-backend-bucket:
     runs-on: ubuntu-22.04
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          path: develop
-
       - name: Checkout terraform-live-repo
         uses: actions/checkout@v3
         with:
-          repository: ${{ env.DEFAULT_ORG }}/terraform-live-repo-remote-state
+          repository: ${{ env.DEFAULT_ORG }}/${{ env.TERRAFORM_REMOTE_STATE_REPO }}
           path: develop
 
+      - name: Terraform Plan remote backend bucket
+        run: |
+          cd ${{ env.TERRAFORM_REMOTE_STATE_REPO }}
+          terraform init
+          terraform validate
+          terraform plan
+      
+      - name: Require approvals
+        uses: trstringer/manual-approval@v1
+        with:
+          secret: ${{ github.TOKEN }}
+          approvers: ${{ env.DEFAULT_REVIEWER }}
+          minimum-approvals: 1
+          issue-title: "Require approvals"
+          issue-body: "Initialize remote state backend bucket requires approvals."
+      
+      - name: Terraform Apply remote backend bucket
+        run: |
+          terraform plan
+  
+  deploy-platform-infrastructure:
+    runs-on: ubuntu-22.04
+    steps:
       - name: Checkout terraform-live-repo
         uses: actions/checkout@v3
         with:
-          repository: ${{ env.DEFAULT_ORG }}/terraform-live-repo
+          repository: ${{ env.DEFAULT_ORG }}/${{ env.TERRAFORM_LIVE_REPO }}
           path: develop
       
       - name: Terraform Plan remote backend bucket
         run: |
+          cd ${{ env.TERRAFORM_LIVE_REPO }}
           terraform init
           terraform validate
           terraform plan
