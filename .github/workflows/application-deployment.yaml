@@ -2,7 +2,6 @@ on:
   workflow_dispatch:
     inputs:
       app_blob:
-        description: "Blob object for app configuration on Google Cloud Storage."
         type: string
         required: true
 jobs:
