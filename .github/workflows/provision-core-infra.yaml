@@ -6,6 +6,9 @@ on:
 env:
   DEFAULT_ORG: uet-app-distributor
   DEFAULT_REVIEWER: thai-nm
+  GOOGLE_REGION: asia-southeast1
+  GOOGLE_ZONE: asia-southeast1-a
+  GOOGLE_PROJECT: uet-app-distributor
   TERRAFORM_LIVE_REPO: terraform-live-repo
   TERRAFORM_REMOTE_STATE_REPO: terraform-live-repo-remote-state
 
