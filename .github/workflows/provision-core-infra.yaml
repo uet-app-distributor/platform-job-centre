@@ -27,7 +27,7 @@ jobs:
         with:
           credentials_json: ${{ secrets.GOOGLE_RUNNER_CREDENTIALS }}
 
-      - name: Terraform Plan - remote backend bucket
+      - name: Terraform Plan - Remote backend bucket
         run: |
           terraform init
           terraform validate
@@ -44,7 +44,7 @@ jobs:
           issue-body: "Initialize remote state backend bucket requires reviewers."
 
       - name: Terraform Apply - Remote backend bucket
-        run: terraform plan
+        run: terraform apply -auto-approve
 
   deploy-platform-infrastructure:
     needs: deploy-remote-backend-bucket
