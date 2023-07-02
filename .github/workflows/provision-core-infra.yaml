@@ -79,4 +79,4 @@ jobs:
           issue-body: "Provision platform infrastructure requires reviewers."
 
       - name: Terraform Apply - Platform infrastructure
-        run: terraform plan
+        run: terraform apply -auto-approve
