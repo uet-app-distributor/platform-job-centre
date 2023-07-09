@@ -49,9 +49,9 @@ jobs:
       - name: Deploy Distributor
         uses: appleboy/ssh-action@v0.1.10
         with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.KEY }}
-          port: ${{ secrets.PORT }}
+          host: ${{ secrets.DISTRIBUTOR_INSTANCE_HOST }}
+          username: ${{ secrets.DISTRIBUTOR_INSTANCE_PRIMARY_USER }}
+          key: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_KEY }}
+          port: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_PORT }}
           script: |
             kubectl apply -f deployment.yaml
