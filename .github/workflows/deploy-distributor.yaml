@@ -22,6 +22,8 @@ jobs:
       - name: Deploy App Distributor
         uses: appleboy/ssh-action@v1.0.0
         with:
-          host: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_KEY }}
+          host: ${{ secrets.DISTRIBUTOR_INSTANCE_HOST }}
+          username: ${{ secrets.DISTRIBUTOR_INSTANCE_PRIMARY_USER }}
+          key: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_KEY }}
           port: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_PORT }}
           script: microk8s kubectl apply -f ${{ DISTRIBUTOR_REPO }}/deployment.yaml
