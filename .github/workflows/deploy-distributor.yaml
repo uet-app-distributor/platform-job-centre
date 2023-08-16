@@ -1,0 +1,27 @@
+run-name: Deploy App Distributor
+
+on:
+  workflow_dispatch:
+
+env:
+  DISTRIBUTOR_REPO_URL: https://github.com/uet-app-distributor/platform-app-distributor.git
+  DISTRIBUTOR_REPO: platform-app-distributor
+
+jobs:
+  deploy:
+    name: Deploy App Distributor
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Prepare repository
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_KEY }}
+          port: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_PORT }}
+          script: git clone ${{ env.DISTRIBUTOR_REPO_URL }}
+
+      - name: Deploy App Distributor
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_KEY }}
+          port: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_PORT }}
+          script: microk8s kubectl apply -f ${{ DISTRIBUTOR_REPO }}/deployment.yaml
