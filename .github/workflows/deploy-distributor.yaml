@@ -26,4 +26,4 @@ jobs:
           username: ${{ secrets.DISTRIBUTOR_INSTANCE_PRIMARY_USER }}
           key: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_KEY }}
           port: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_PORT }}
-          script: microk8s kubectl apply -f ${{ DISTRIBUTOR_REPO }}/deployment.yaml
+          script: microk8s kubectl apply -f ${{ env.DISTRIBUTOR_REPO }}/deployment.yaml
