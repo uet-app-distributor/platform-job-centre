@@ -1,3 +1,4 @@
+name: Deploy App Distributor
 run-name: Deploy App Distributor
 
 on:
@@ -39,6 +40,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v4
         with:
+          context: "{{defaultContext}}:platform-app-distributor"
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/uet-app-distributor:latest
 
