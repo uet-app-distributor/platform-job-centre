@@ -24,12 +24,6 @@ jobs:
           repository: uet-app-distributor/platform-app-distributor
           ref: ${{ inputs.distributor_version }}
 
-      - name: Getting Service Account credential for Docker image
-        run: |
-          echo "$SERVICE_ACCOUNT" > service_account.json
-        env:
-          SERVICE_ACCOUNT: ${{secrets.DISTRIBUTOR_DOCKER_IMAGE_SERVICE_ACCOUNT}}
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
