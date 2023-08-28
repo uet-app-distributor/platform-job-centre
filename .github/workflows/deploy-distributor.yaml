@@ -53,4 +53,4 @@ jobs:
           key: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_KEY }}
           username: ${{ secrets.DISTRIBUTOR_INSTANCE_PRIMARY_USER }}
           script: |
-            microk8s kubectl rollout restart deployment distributor
+            microk8s kubectl rollout restart deployment -n uet-app-distributor distributor
