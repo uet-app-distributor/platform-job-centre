@@ -7,8 +7,12 @@ on:
         description: "App configurations as a blob object on GCS."
         type: string
         required: true
-      source_url:
-        description: "Source code URL."
+      github_user:
+        description: "GitHub user."
+        type: string
+        required: true
+      github_repo:
+        description: "GitHub repo."
         type: string
         required: true
 jobs:
@@ -28,10 +32,14 @@ jobs:
           pwd
 
       - name: Checkout customer application repository
-        run: |
-          git clone ${{ inputs.source_url }} ${{ github.workspace }}
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ inputs.github_user }}/${{ inputs.github_repo }}
+          ref: main
+          path: customer-app
 
       - name: List files
         run: |
+          ls -la
           ls -la ${{ github.workspace }}
           pwd
