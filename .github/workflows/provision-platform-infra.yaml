@@ -34,9 +34,6 @@ jobs:
         with:
           credentials_json: ${{ secrets.GOOGLE_RUNNER_CREDENTIALS }}
 
-      - name: 'Set up Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@v1'
-
       - name: Terraform Plan - Platform infrastructure
         run: |
           terraform init
