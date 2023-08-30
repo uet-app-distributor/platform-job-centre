@@ -34,8 +34,8 @@ jobs:
 
       - name: Get customer app configuration file
         run: |
-          gsutils cat ${{ inputs.app_blob }}
-          gsutils cat ${{ inputs.app_blob }} > ${{ github.workspace }}/customer-app/app_config.yaml
+          gsutil cat ${{ inputs.app_blob }}
+          gsutil cat ${{ inputs.app_blob }} > ${{ github.workspace }}/customer-app/app_config.yaml
           cat ${{ github.workspace }}/customer-app/app_config.yaml
 
       - name: Checkout template-generator repository
