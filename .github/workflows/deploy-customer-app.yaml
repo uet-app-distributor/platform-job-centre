@@ -37,18 +37,18 @@ jobs:
 
       - name: Get customer app configuration file
         run: |
-          gsutil cat ${{ inputs.app_blob }}
           gsutil cat ${{ inputs.app_blob }} > ${{ github.workspace }}/customer-app/app_config.yaml
-          cat ${{ github.workspace }}/customer-app/app_config.yaml
 
       - name: Checkout template-generator repository
         uses: actions/checkout@v3
         with:
           repository: uet-app-distributor/template-generator
           ref: main
+          path: template-generator
 
       - name: Generate Dockerfile
         run: |
+          cd ${{ github.workspace }}/template-generator
           pip install -r requirements.txt
           python3 main.py ${{ github.workspace }}/customer-app/app_config.yaml
           ls -la
