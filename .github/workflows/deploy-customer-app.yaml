@@ -49,6 +49,7 @@ jobs:
       - name: Generate Dockerfile
         run: |
           cd ${{ github.workspace }}/template-generator
+          ls -la
           pip install -r requirements.txt
           python3 main.py ${{ github.workspace }}/customer-app/app_config.yaml
           ls -la
