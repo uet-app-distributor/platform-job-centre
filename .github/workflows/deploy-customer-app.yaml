@@ -1,4 +1,5 @@
-run-name: Deploy Customer Applications
+name: Deploy customer application
+run-name: Deploy customer application
 
 on:
   workflow_dispatch:
@@ -16,21 +17,9 @@ on:
         type: string
         required: true
 jobs:
-  deploy:
+  generate_template:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout template-generator repository
-        uses: actions/checkout@v3
-        with:
-          repository: uet-app-distributor/template-generator
-          ref: main
-          path: template-generator
-
-      - name: List files
-        run: |
-          ls -la
-          pwd
-
       - name: Checkout customer application repository
         uses: actions/checkout@v3
         with:
@@ -38,8 +27,26 @@ jobs:
           ref: main
           path: customer-app
 
-      - name: List files
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GOOGLE_RUNNER_CREDENTIALS }}
+
+      - name: Get customer app configuration file
         run: |
+          gsutils cat ${{ inputs.app_blob }}
+          gsutils cat ${{ inputs.app_blob }} > ${{ github.workspace }}/customer-app/app_config.yaml
+          cat ${{ github.workspace }}/customer-app/app_config.yaml
+
+      - name: Checkout template-generator repository
+        uses: actions/checkout@v3
+        with:
+          repository: uet-app-distributor/template-generator
+          ref: main
+
+      - name: Generate Dockerfile
+        run: |
+          pip install -r requirements.txt
+          python3 main.py ${{ github.workspace }}/customer-app/app_config.yaml
           ls -la
-          ls -la ${{ github.workspace }}
-          pwd
+          cat customer-app-dockerfile
