@@ -29,8 +29,7 @@ jobs:
           repository: ${{ env.DEFAULT_ORG }}/${{ env.TERRAFORM_LIVE_REPO }}
           ref: ${{ inputs.platform_version }}
 
-      - id: "auth"
-        name: "Authenticate to Google Cloud"
+      - name: "Authenticate to Google Cloud"
         uses: "google-github-actions/auth@v1"
         with:
           credentials_json: ${{ secrets.GOOGLE_RUNNER_CREDENTIALS }}

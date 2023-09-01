@@ -1,29 +1,77 @@
-run-name: Deploy Customer Applications
+name: Deploy customer application
+run-name: Deploy customer application
 
 on:
   workflow_dispatch:
     inputs:
-      app_blob:
-        description: "App configurations as a blob object on GCS."
+      customer_app_blob:
+        description: "gsutil URI of customer app config blob object."
+        type: string
+        required: true
+      customer_app_name:
+        description: "Name of the customer app."
+        type: string
+        required: true
+      github_user:
+        description: "GitHub user."
+        type: string
+        required: true
+      github_repo:
+        description: "GitHub repo."
         type: string
         required: true
 jobs:
-  deploy:
+  deploy_customer_app:
     runs-on: ubuntu-latest
     steps:
-      - name: Clone repositories
-        run: |
-          ls -la
-          echo '${{ inputs.app_blob }}'
-          git clone https://github.com/uet-app-distributor/template-generator.git
-          cd template-generator
-          ls -la
-      - name: Generate files
-        run: |
-          ls -la
-          cd template-generator
-          ls -la
+      - name: Checkout customer application repository
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ inputs.github_user }}/${{ inputs.github_repo }}
+          ref: main
+          path: customer-app
 
-#         pip install -r requirement.txt
-#         python3 main.py sample-app-config.yaml
-#         cat sample*
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GOOGLE_RUNNER_CREDENTIALS }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+
+      - name: Get customer app configuration file
+        run: gsutil cat ${{ inputs.customer_app_blob }} > ${{ github.workspace }}/customer-app/app_config.yaml
+
+      - name: Checkout template-generator repository
+        uses: actions/checkout@v3
+        with:
+          repository: uet-app-distributor/template-generator
+          ref: main
+          path: template-generator
+
+      - name: Generate Dockerfile, K8s job
+        run: |
+          cd ${{ github.workspace }}/template-generator
+          pip install -r requirements.txt
+          python3 main.py ${{ github.workspace }}/customer-app/app_config.yaml
+          mv customer-app-dockerfile create-db-user-job.yaml ${{ github.workspace }}/customer-app
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: ${{ github.workspace }}/customer-app
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.customer_app_name }}:latest
