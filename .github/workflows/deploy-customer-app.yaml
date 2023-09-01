@@ -4,8 +4,12 @@ run-name: Deploy customer application
 on:
   workflow_dispatch:
     inputs:
-      app_blob:
-        description: "App configurations as a blob object on GCS."
+      customer_app_blob:
+        description: "gsutil URI of customer app config blob object."
+        type: string
+        required: true
+      customer_app_name:
+        description: "Name of the customer app."
         type: string
         required: true
       github_user:
@@ -36,10 +40,7 @@ jobs:
         uses: google-github-actions/setup-gcloud@v1
 
       - name: Get customer app configuration file
-        run: |
-          gsutil cat ${{ inputs.app_blob }} > ${{ github.workspace }}/customer-app/app_config.yaml
-          CUSTOMER_APP_PROJECT=$(gsutil cat ${{ inputs.app_blob }} | yq .project)
-          echo $(CUSTOMER_APP_PROJECT)
+        run: gsutil cat ${{ inputs.customer_app_blob }} > ${{ github.workspace }}/customer-app/app_config.yaml
 
       - name: Checkout template-generator repository
         uses: actions/checkout@v3
@@ -73,4 +74,4 @@ jobs:
           context: ${{ github.workspace }}/customer-app
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/$(CUSTOMER_APP_PROJECT):latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.customer_app_name }}:latest
