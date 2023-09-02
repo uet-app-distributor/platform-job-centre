@@ -75,3 +75,23 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.customer_app_name }}:latest
+
+      - name: Send job manifest file to server
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.DISTRIBUTOR_INSTANCE_HOST }}
+          port: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_PORT }}
+          key: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_KEY }}
+          username: ${{ secrets.DISTRIBUTOR_INSTANCE_PRIMARY_USER }}
+          source: "${{ github.workspace }}/customer-app/customer-app-dockerfile"
+          target: /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/create-db-user-job.yaml
+
+      - name: Deploy job
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.DISTRIBUTOR_INSTANCE_HOST }}
+          port: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_PORT }}
+          key: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_KEY }}
+          username: ${{ secrets.DISTRIBUTOR_INSTANCE_PRIMARY_USER }}
+          script: |
+            microk8s kubectl apply -f  /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/create-db-user-job.yaml
