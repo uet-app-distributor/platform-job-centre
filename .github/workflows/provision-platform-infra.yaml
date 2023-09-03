@@ -1,4 +1,5 @@
-run-name: Provision Platform Infrastructure
+name: Provision platform infrastructure
+run-name: Provision platform infrastructure
 
 on:
   workflow_dispatch:

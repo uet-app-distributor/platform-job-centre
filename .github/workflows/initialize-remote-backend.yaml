@@ -1,4 +1,5 @@
-run-name: Initialize Remote Backend
+name: Initialize remote backend
+run-name: Initialize remote backend
 
 on:
   workflow_dispatch:

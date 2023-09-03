@@ -1,4 +1,5 @@
-run-name: Decommission Platform Infrastructure
+name: Decommission platform infrastructure
+run-name: Decommission platform infrastructure
 
 on:
   workflow_dispatch:
@@ -23,7 +24,7 @@ env:
   TERRAFORM_REMOTE_STATE_REPO: terraform-live-repo-remote-state
 
 jobs:
-  decommision-platform-infrastructure:
+  decommision_platform_infrastructure:
     name: Decommission platform infrastructure
     runs-on: ubuntu-22.04
     steps:

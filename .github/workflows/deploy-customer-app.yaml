@@ -87,7 +87,7 @@ jobs:
           target: /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}
           strip_components: 1
 
-      - name: Deploy job and 
+      - name: Deploy initial database user job and customer application
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.DISTRIBUTOR_INSTANCE_HOST }}
@@ -98,4 +98,3 @@ jobs:
             microk8s kubectl apply -f  /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/create-db-user-job.yaml
             microk8s kubectl wait --for=condition=complete -f /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/create-db-user-job.yaml
             microk8s kubectl apply -f  /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/customer-app-deployment.yaml
-            microk8s kubectl rollout restart -f /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/customer-app-deployment.yaml
