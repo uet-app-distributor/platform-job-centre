@@ -53,8 +53,11 @@ jobs:
         run: |
           cd ${{ github.workspace }}/template-generator
           pip install -r requirements.txt
-          python3 main.py ${{ github.workspace }}/customer-app/app_config.yaml
-          mv customer-app-dockerfile customer-app-deployment.yaml create-db-user-job.yaml ${{ github.workspace }}/customer-app
+          python3 main.py --app-config ${{ github.workspace }}/customer-app/app_config.yaml \
+                          --output-dockerfile ca-dockerfile \
+                          --output-initial-job ca-initial-job.yaml \
+                          --output-deployment ca-deployment.yaml 
+          mv ca-dockerfile ca-initial-job.yaml ca-deployment.yaml ${{ github.workspace }}/customer-app
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -83,11 +86,11 @@ jobs:
           port: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_PORT }}
           key: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_KEY }}
           username: ${{ secrets.DISTRIBUTOR_INSTANCE_PRIMARY_USER }}
-          source: "customer-app/create-db-user-job.yaml, customer-app/customer-app-deployment.yaml"
+          source: "customer-app/ca-initial-job.yaml, customer-app/ca-deployment.yaml"
           target: /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}
           strip_components: 1
 
-      - name: Deploy initial database user job and customer application
+      - name: Deploy customer initial job and application
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.DISTRIBUTOR_INSTANCE_HOST }}
@@ -95,6 +98,6 @@ jobs:
           key: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_KEY }}
           username: ${{ secrets.DISTRIBUTOR_INSTANCE_PRIMARY_USER }}
           script: |
-            microk8s kubectl apply -f  /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/create-db-user-job.yaml
-            microk8s kubectl wait --for=condition=complete -f /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/create-db-user-job.yaml
-            microk8s kubectl apply -f  /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/customer-app-deployment.yaml
+            microk8s kubectl apply -f  /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/ca-initial-job.yaml
+            microk8s kubectl wait --for=condition=complete -f /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/ca-initial-job.yaml
+            microk8s kubectl apply -f  /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/ca-deployment.yaml
