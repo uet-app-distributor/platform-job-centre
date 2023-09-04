@@ -36,8 +36,7 @@ jobs:
           script: |
             microk8s helm repo add appsmith https://helm.appsmith.com
             microk8s helm repo update
-            microk8s helm upgrade -f /tmp/appsmith/values.yaml
+            microk8s helm upgrade -f /tmp/appsmith/values.yaml \
                                   --install appsmith appsmith/appsmith \
                                   --create-namespace \
-                                  --namespace appsmith\
-                                  
+                                  --namespace appsmith
