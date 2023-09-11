@@ -107,6 +107,7 @@ jobs:
 
   deploy_customer_app_backend:
     if: ${{ inputs.be_github_repo }} != '' && ${{ inputs.be_github_user }} != ''
+    needs: [generate_deployment_files]
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout customer app backend repository
