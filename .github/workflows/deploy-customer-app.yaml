@@ -158,7 +158,7 @@ jobs:
         with:
           context: ${{ github.workspace }}/customer-app-backend
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/be-${{ inputs.customer_app_name }}:latest
-          file: ${{ github.workspace }}/customer-app-frontend/output-backend-ca-dockerfile
+          file: ${{ github.workspace }}/customer-app-backend/output-backend-ca-dockerfile
           push: true
 
       - name: Send job manifest file to server
