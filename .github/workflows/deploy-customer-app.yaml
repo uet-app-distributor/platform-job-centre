@@ -59,7 +59,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: deployment-artifacts
-          path: output-*
+          path: ${{ github.workspace }}/template-generator/output-*
 
   deploy_customer_app_frontend:
     if: ${{ inputs.fe_github_repo }} != '' && ${{ inputs.fe_github_user }} != ''
