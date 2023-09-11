@@ -77,6 +77,11 @@ jobs:
         with:
           name: deployment-artifacts
           path: ${{ github.workspace }}/customer-app-frontend
+      
+      - run: |
+          pwd
+          ls -la
+          ls -la /home/runner/work/platform-job-centre/platform-job-centre/customer-app-frontend
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
