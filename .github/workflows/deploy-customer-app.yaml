@@ -76,6 +76,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: deployment-artifacts
+          path: ${{ github.workspace }}/customer-app-frontend
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -129,6 +130,11 @@ jobs:
           repository: ${{ inputs.be_github_user }}/${{ inputs.be_github_repo }}
           path: customer-app-backend
           ref: main
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: deployment-artifacts
+          path: ${{ github.workspace }}/customer-app-backend
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
