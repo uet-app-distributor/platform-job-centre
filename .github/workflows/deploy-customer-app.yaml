@@ -79,17 +79,17 @@ jobs:
 
       - run: |
           cat ${{ github.workspace }}/customer-app-frontend/.env
-          ls -la
+          ls -la ${{ github.workspace }}/customer-app-frontend
 
       - uses: actions/download-artifact@v3
         with:
           name: deployment-artifacts
           path: ${{ github.workspace }}/customer-app-frontend
-    
+
       - run: |
           cat ${{ github.workspace }}/customer-app-frontend/.env
-          ls -la
-    
+          ls -la ${{ github.workspace }}/customer-app-frontend
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
 
