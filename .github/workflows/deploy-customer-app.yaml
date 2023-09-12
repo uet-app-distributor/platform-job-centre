@@ -38,7 +38,9 @@ jobs:
         uses: google-github-actions/setup-gcloud@v1
 
       - name: Get customer app configuration file
-        run: gsutil cat ${{ inputs.customer_app_blob }} > ${{ github.workspace }}/app_config.yaml
+        run: |
+          gsutil cat ${{ inputs.customer_app_blob }} > ${{ github.workspace }}/app_config.yaml
+          gsutil cat ${{ inputs.customer_app_blob }}.env > ${{ github.workspace }}/.env
 
       - name: Checkout template-generator repository
         uses: actions/checkout@v3
@@ -59,9 +61,11 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: deployment-artifacts
-          path: ${{ github.workspace }}/template-generator/output-*
+          path: |
+            ${{ github.workspace }}/template-generator/output-*
+            ${{ github.workspace }}/.env
 
-  deploy_customer_app_frontend:
+  deploy_frontend:
     if: ${{ inputs.fe_github_repo }} != '' && ${{ inputs.fe_github_user }} != ''
     needs: [generate_deployment_files]
     runs-on: ubuntu-22.04
@@ -73,15 +77,14 @@ jobs:
           path: customer-app-frontend
           ref: main
 
+      - run: cat ${{ github.workspace }}/customer-app-frontend/.env
+
       - uses: actions/download-artifact@v3
         with:
           name: deployment-artifacts
           path: ${{ github.workspace }}/customer-app-frontend
 
-      - run: |
-          pwd
-          ls -la
-          ls -la /home/runner/work/platform-job-centre/platform-job-centre/customer-app-frontend
+      - run: cat ${{ github.workspace }}/customer-app-frontend/.env
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -124,7 +127,7 @@ jobs:
           script: |
             microk8s kubectl apply -f  /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/output-frontend-ca-manifest.yaml
 
-  deploy_customer_app_backend:
+  deploy_backend:
     if: ${{ inputs.be_github_repo }} != '' && ${{ inputs.be_github_user }} != ''
     needs: [generate_deployment_files]
     runs-on: ubuntu-22.04
