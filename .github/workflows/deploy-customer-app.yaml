@@ -152,6 +152,11 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - run: |
+          ls -la 
+          ls -la ${{ github.workspace }}/customer-app-backend
+          ls -la ${{ github.workspace }}/customer-app-backend/template-generator
+
       - name: Build and push
         uses: docker/build-push-action@v4
         with:
