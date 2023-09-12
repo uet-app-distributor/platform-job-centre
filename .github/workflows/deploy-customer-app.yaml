@@ -77,19 +77,10 @@ jobs:
           path: customer-app-frontend
           ref: main
 
-      - run: |
-          cat ${{ github.workspace }}/customer-app-frontend/.env
-          ls -la ${{ github.workspace }}/customer-app-frontend
-
       - uses: actions/download-artifact@v3
         with:
           name: deployment-artifacts
           path: ${{ github.workspace }}/customer-app-frontend
-
-      - run: |
-          cat ${{ github.workspace }}/customer-app-frontend/.env
-          ls -la ${{ github.workspace }}/customer-app-frontend
-          ls -la ${{ github.workspace }}/customer-app-frontend/template-generator
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -118,7 +109,7 @@ jobs:
           port: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_PORT }}
           key: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_KEY }}
           username: ${{ secrets.DISTRIBUTOR_INSTANCE_PRIMARY_USER }}
-          source: "customer-app-frontend/output-frontend-ca-manifest.yaml"
+          source: "customer-app-frontend/template-generator/output-frontend-ca-manifest.yaml"
           target: /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}
           strip_components: 1
 
@@ -176,7 +167,7 @@ jobs:
           port: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_PORT }}
           key: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_KEY }}
           username: ${{ secrets.DISTRIBUTOR_INSTANCE_PRIMARY_USER }}
-          source: "customer-app-backend/output-ca-initial-job.yaml, customer-app-backend/output-backend-ca-manifest.yaml"
+          source: "customer-app-backend/template-generator/output-ca-initial-job.yaml, customer-app-backend/template-generator/output-backend-ca-manifest.yaml"
           target: /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}
           strip_components: 1
 
