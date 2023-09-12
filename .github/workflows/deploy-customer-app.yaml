@@ -111,7 +111,7 @@ jobs:
           username: ${{ secrets.DISTRIBUTOR_INSTANCE_PRIMARY_USER }}
           source: "customer-app-frontend/template-generator/output-frontend-ca-manifest.yaml"
           target: /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}
-          strip_components: 1
+          strip_components: 2
 
       - name: Deploy customer initial job and application
         uses: appleboy/ssh-action@v1.0.0
@@ -169,7 +169,7 @@ jobs:
           username: ${{ secrets.DISTRIBUTOR_INSTANCE_PRIMARY_USER }}
           source: "customer-app-backend/template-generator/output-ca-initial-job.yaml, customer-app-backend/template-generator/output-backend-ca-manifest.yaml"
           target: /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}
-          strip_components: 1
+          strip_components: 2
 
       - name: Deploy customer initial job and application
         uses: appleboy/ssh-action@v1.0.0
