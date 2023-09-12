@@ -25,6 +25,9 @@ on:
         description: "GitHub repo for backend application."
         type: string
 
+env:
+  UAD_DOMAIN: uet-app-distributor.site
+
 jobs:
   generate_deployment_files:
     runs-on: ubuntu-22.04
@@ -126,6 +129,10 @@ jobs:
             microk8s kubectl wait --for=condition=complete -f /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/output-ca-initial-job.yaml
             microk8s kubectl apply -f /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/output-frontend-ca-manifest.yaml
 
+      - name: Access URL
+        run: |
+          echo "Access URL: https://${{ inputs.customer_app_name }}.${{ env.UAD_DOMAIN }}"
+
   deploy_backend:
     if: inputs.be_github_repo != 'none' && inputs.be_github_user != 'none'
     needs: [generate_deployment_files]
@@ -154,11 +161,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - run: |
-          ls -la 
-          ls -la ${{ github.workspace }}/customer-app-backend
-          ls -la ${{ github.workspace }}/customer-app-backend/template-generator
 
       - name: Build and push
         uses: docker/build-push-action@v4
