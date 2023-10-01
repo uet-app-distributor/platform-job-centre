@@ -74,6 +74,7 @@ jobs:
       - name: Setup backend bucket without pre-configured remote state
         if: steps.fetch_backend_bucket_remote_state.outcome != 'success'
         run: |
+          cd ${{ github.workspace }}/terraform-customer-live-repo/tfstate_backend
           terraform init
           echo "No pre-configured terraform.tfstate found for backend bucket."
           terraform apply -auto-approve
@@ -82,6 +83,7 @@ jobs:
       - name: Setup backend bucket with pre-configured remote state
         if: steps.fetch_backend_bucket_remote_state.outcome == 'success'
         run: |
+          cd ${{ github.workspace }}/terraform-customer-live-repo/tfstate_backend
           terraform init
           echo "Pre-configured terraform.tfstate found and will be used as current state."
           terraform apply -auto-approve -state remote_state.tfstate
