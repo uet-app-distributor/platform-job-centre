@@ -69,10 +69,10 @@ jobs:
           ls -la
 
       - name: Upload backend bucket tfstate to GCS
-        uses: 'google-github-actions/upload-cloud-storage@v1'
+        uses: "google-github-actions/upload-cloud-storage@v1"
         with:
-          path: '${{ github.workspace }}/terraform-customer-live-repo/tfstate_backend/terraform.tfstate'
-          destination: 'uet-app-distributor/customer_apps/${{ inputs.customer_name }}/terraform.tfstate'
+          path: "${{ github.workspace }}/terraform-customer-live-repo/tfstate_backend/terraform.tfstate"
+          destination: "uet-app-distributor/customer_apps/${{ inputs.customer_name }}"
 
       # - name: Provision infrastructure
       #   run: |
