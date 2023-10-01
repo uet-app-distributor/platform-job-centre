@@ -4,15 +4,30 @@ run-name: Deploy customer application
 on:
   workflow_dispatch:
     inputs:
-      provider:
-        description: "Hosting provider"
+      customer_provider:
+        description: "Customer hosting provider"
+        type: string
+      customer_credential_file:
+        description: "gsutil URI to customer credenttial file"
+        type: string
+      customer_app_config_blob:
+        description: "gsutil URI to customer app configuration file"
+        type: string
+      customer_app_name:
+        description: "Name of the customer app."
         type: string
         required: true
-      access_key_id:
-        description: "Access key ID"
+      fe_github_user:
+        description: "GitHub user for frontend application."
         type: string
-      access_key:
-        description: "Access key value"
+      fe_github_repo:
+        description: "GitHub repo for frontend application."
+        type: string
+      be_github_user:
+        description: "GitHub user for backend application."
+        type: string
+      be_github_repo:
+        description: "GitHub repo for backend application."
         type: string
 
 env:
@@ -20,12 +35,6 @@ env:
 
 jobs:
   provision_infrastructure:
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Echo
-        run: echo "Provisioning..."
-
-  generate_deployment_files:
     runs-on: ubuntu-22.04
     steps:
       - name: Authenticate to Google Cloud
@@ -38,92 +47,128 @@ jobs:
 
       - name: Get customer app configuration file
         run: |
-          gsutil cat ${{ inputs.customer_app_blob }} > ${{ github.workspace }}/app_config.yaml
-          gsutil cat ${{ inputs.customer_app_blob }}.env > ${{ github.workspace }}/.env
+          gsutil cat ${{ inputs.customer_credential_file }} > ${{ github.workspace }}/credentials.env
 
-      - name: Checkout template-generator repository
+      - name: Checkout terraform-customer-live-repo repository
         uses: actions/checkout@v3
         with:
-          repository: uet-app-distributor/template-generator
-          path: template-generator
+          repository: uet-app-distributor/terraform-customer-live-repo
+          path: terraform-customer-live-repo
           ref: main
 
-      - name: Generate Dockerfiles, initial job and manifest files
+      - name: Setup backend bucket
         run: |
-          cd ${{ github.workspace }}/template-generator
-          pip install -r requirements.txt
-          python3 main.py --app-config ${{ github.workspace }}/app_config.yaml \
-                          --output-dockerfile ca-dockerfile \
-                          --output-initial-job ca-initial-job.yaml \
-                          --output-manifest ca-manifest.yaml
+          source ${{ github.workspace }}/credentials.env
+          cd ${{ github.workspace }}/terraform-customer-live-repo/init
+          terraform init
+          terraform apply -auto-approve
 
-      - uses: actions/upload-artifact@v3
-        with:
-          name: deployment-artifacts
-          path: |
-            ${{ github.workspace }}/template-generator/output-*
-            ${{ github.workspace }}/.env
-
-  deploy_customer_app:
-    needs: [provision_infrastructure]
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout customer app frontend repository
-        uses: actions/checkout@v3
-        with:
-          repository: ${{ inputs.fe_github_user }}/${{ inputs.fe_github_repo }}
-          path: customer-app-frontend
-          ref: main
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: deployment-artifacts
-          path: ${{ github.workspace }}/customer-app-frontend
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build and push
-        uses: docker/build-push-action@v4
-        with:
-          context: ${{ github.workspace }}/customer-app-frontend
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/fe-${{ inputs.customer_app_name }}:latest
-          file: ${{ github.workspace }}/customer-app-frontend/template-generator/output-frontend-ca-dockerfile
-          push: true
-
-      - name: Send job manifest file to server
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.DISTRIBUTOR_INSTANCE_HOST }}
-          port: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_PORT }}
-          key: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_KEY }}
-          username: ${{ secrets.DISTRIBUTOR_INSTANCE_PRIMARY_USER }}
-          source: "customer-app-frontend/template-generator/output-frontend-ca-manifest.yaml,customer-app-frontend/template-generator/output-ca-initial-job.yaml"
-          target: /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}
-          strip_components: 2
-
-      - name: Deploy customer initial job and application
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.DISTRIBUTOR_INSTANCE_HOST }}
-          port: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_PORT }}
-          key: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_KEY }}
-          username: ${{ secrets.DISTRIBUTOR_INSTANCE_PRIMARY_USER }}
-          script: |
-            ls -la /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}
-            microk8s kubectl apply -f /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/output-ca-initial-job.yaml
-            microk8s kubectl wait --for=condition=complete -f /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/output-ca-initial-job.yaml
-            microk8s kubectl apply -f /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/output-frontend-ca-manifest.yaml
-
-      - name: Access URL
+      - name: Provision infrastructure
         run: |
-          echo "Access URL: https://${{ inputs.customer_app_name }}.${{ env.UAD_DOMAIN }}"
+          source ${{ github.workspace }}/credentials.env
+          cd ${{ github.workspace }}/terraform-customer-live-repo/environments/customer
+          terraform init
+          terraform apply -auto-approve
+
+  # generate_deployment_files:
+  #   runs-on: ubuntu-22.04
+  #   steps:
+  #     - name: Authenticate to Google Cloud
+  #       uses: google-github-actions/auth@v1
+  #       with:
+  #         credentials_json: ${{ secrets.GOOGLE_RUNNER_CREDENTIALS }}
+
+  #     - name: Set up Cloud SDK
+  #       uses: google-github-actions/setup-gcloud@v1
+
+  #     - name: Get customer app configuration file
+  #       run: |
+  #         gsutil cat ${{ inputs.customer_app_config_blob }} > ${{ github.workspace }}/app_config.yaml
+  #         gsutil cat ${{ inputs.customer_app_config_blob }}.env > ${{ github.workspace }}/.env
+
+  #     - name: Checkout template-generator repository
+  #       uses: actions/checkout@v3
+  #       with:
+  #         repository: uet-app-distributor/template-generator
+  #         path: template-generator
+  #         ref: main
+
+  #     - name: Generate Dockerfiles, initial job and manifest files
+  #       run: |
+  #         cd ${{ github.workspace }}/template-generator
+  #         pip install -r requirements.txt
+  #         python3 main.py --app-config ${{ github.workspace }}/app_config.yaml \
+  #                         --output-dockerfile ca-dockerfile \
+  #                         --output-initial-job ca-initial-job.yaml \
+  #                         --output-manifest ca-manifest.yaml
+
+  #     - uses: actions/upload-artifact@v3
+  #       with:
+  #         name: deployment-artifacts
+  #         path: |
+  #           ${{ github.workspace }}/template-generator/output-*
+  #           ${{ github.workspace }}/.env
+
+  # deploy_customer_app:
+  #   needs: [provision_infrastructure]
+  #   runs-on: ubuntu-22.04
+  #   steps:
+  #     - name: Checkout customer app frontend repository
+  #       uses: actions/checkout@v3
+  #       with:
+  #         repository: ${{ inputs.fe_github_user }}/${{ inputs.fe_github_repo }}
+  #         path: customer-app-frontend
+  #         ref: main
+
+  #     - uses: actions/download-artifact@v3
+  #       with:
+  #         name: deployment-artifacts
+  #         path: ${{ github.workspace }}/customer-app-frontend
+
+  #     - name: Set up QEMU
+  #       uses: docker/setup-qemu-action@v2
+
+  #     - name: Set up Docker Buildx
+  #       uses: docker/setup-buildx-action@v2
+
+  #     - name: Login to Docker Hub
+  #       uses: docker/login-action@v2
+  #       with:
+  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
+  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+  #     - name: Build and push
+  #       uses: docker/build-push-action@v4
+  #       with:
+  #         context: ${{ github.workspace }}/customer-app-frontend
+  #         tags: ${{ secrets.DOCKERHUB_USERNAME }}/fe-${{ inputs.customer_app_name }}:latest
+  #         file: ${{ github.workspace }}/customer-app-frontend/template-generator/output-frontend-ca-dockerfile
+  #         push: true
+
+  #     - name: Send job manifest file to server
+  #       uses: appleboy/scp-action@v0.1.4
+  #       with:
+  #         host: ${{ secrets.DISTRIBUTOR_INSTANCE_HOST }}
+  #         port: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_PORT }}
+  #         key: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_KEY }}
+  #         username: ${{ secrets.DISTRIBUTOR_INSTANCE_PRIMARY_USER }}
+  #         source: "customer-app-frontend/template-generator/output-frontend-ca-manifest.yaml,customer-app-frontend/template-generator/output-ca-initial-job.yaml"
+  #         target: /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}
+  #         strip_components: 2
+
+  #     - name: Deploy customer initial job and application
+  #       uses: appleboy/ssh-action@v1.0.0
+  #       with:
+  #         host: ${{ secrets.DISTRIBUTOR_INSTANCE_HOST }}
+  #         port: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_PORT }}
+  #         key: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_KEY }}
+  #         username: ${{ secrets.DISTRIBUTOR_INSTANCE_PRIMARY_USER }}
+  #         script: |
+  #           ls -la /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}
+  #           microk8s kubectl apply -f /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/output-ca-initial-job.yaml
+  #           microk8s kubectl wait --for=condition=complete -f /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/output-ca-initial-job.yaml
+  #           microk8s kubectl apply -f /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/output-frontend-ca-manifest.yaml
+
+  #     - name: Access URL
+  #       run: |
+  #         echo "Access URL: https://${{ inputs.customer_app_name }}.${{ env.UAD_DOMAIN }}"
