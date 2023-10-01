@@ -57,9 +57,9 @@ jobs:
 
       - name: Setup backend bucket
         run: |
+          set -a
           source ${{ github.workspace }}/credentials.env
-          cat ${{ github.workspace }}/credentials.env
-          printenv
+          set +a
           cd ${{ github.workspace }}/terraform-customer-live-repo/tfstate_backend
           terraform init
           terraform apply -auto-approve
@@ -67,7 +67,6 @@ jobs:
       - name: Provision infrastructure
         run: |
           source ${{ github.workspace }}/credentials.env
-          printenv
           cd ${{ github.workspace }}/terraform-customer-live-repo/environments/customer
           terraform init
           terraform apply -auto-approve
