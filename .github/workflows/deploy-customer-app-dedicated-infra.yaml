@@ -58,6 +58,7 @@ jobs:
       - name: Setup backend bucket
         run: |
           source ${{ github.workspace }}/credentials.env
+          cat ${{ github.workspace }}/credentials.env
           printenv
           cd ${{ github.workspace }}/terraform-customer-live-repo/tfstate_backend
           terraform init
