@@ -99,16 +99,15 @@ jobs:
           ls -la
           gsutil cp ${{ github.workspace }}/terraform-customer-live-repo/tfstate_backend/remote_state.tfstate gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/terraform.tfstate
 
-      # - name: Provision infrastructure
-      #   run: |
-      #     set -a
-      #     source ${{ github.workspace }}/credentials.env
-      #     set +a
-      #     cd ${{ github.workspace }}/terraform-customer-live-repo
-      #     source scripts/get_backend_bucket.sh
-      #     cd ${{ github.workspace }}/terraform-customer-live-repo/environments/customer
-      #     terraform init -backend-config ${{ github.workspace }}/terraform-customer-live-repo/backend_config.tf
-      #     terraform apply -auto-approve
+      - name: Provision infrastructure
+        run: |
+          set -a && source ${{ github.workspace }}/credentials.env && set +a
+
+          cd ${{ github.workspace }}/terraform-customer-live-repo
+          source scripts/get_backend_bucket.sh
+          cd environments/customer
+          terraform init -backend-config ../../backend_config.tf
+          terraform apply -auto-approve
 
   # generate_deployment_files:
   #   runs-on: ubuntu-22.04
