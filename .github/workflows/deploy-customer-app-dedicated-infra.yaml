@@ -16,7 +16,6 @@ on:
       customer_app_name:
         description: "Name of the customer app."
         type: string
-        required: true
       fe_github_user:
         description: "GitHub user for frontend application."
         type: string
@@ -59,7 +58,7 @@ jobs:
       - name: Setup backend bucket
         run: |
           source ${{ github.workspace }}/credentials.env
-          cd ${{ github.workspace }}/terraform-customer-live-repo/init
+          cd ${{ github.workspace }}/terraform-customer-live-repo/tfstate_backend
           terraform init
           terraform apply -auto-approve
 
