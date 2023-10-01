@@ -63,9 +63,20 @@ jobs:
           set -a
           source ${{ github.workspace }}/credentials.env
           set +a
+
+          echo "Trying to fetch backend bucket remote state if exists..."
           cd ${{ github.workspace }}/terraform-customer-live-repo/tfstate_backend
           terraform init
-          terraform apply -auto-approve
+          gsutil cat gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/terraform.tfstate > remote_state.tfstate
+          state_exists=$?
+
+          if [ $state_exists -eq 1 ]; then
+            echo "No pre-configured terraform.tfstate found for backend bucket. A new one will be created and uploaded."
+            terraform apply -auto-approve
+          else
+            echo "Pre-configured terraform.tfstate found and will be used as current state."
+            terraform apply -auto-approve -state remote_state.tfstate
+          fi
 
       - name: Upload backend bucket tfstate to GCS
         run: |
