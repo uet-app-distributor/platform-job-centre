@@ -122,7 +122,7 @@ jobs:
           gsutil cp ./terraform.tfstate gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/backend_bucket.tfstate
 
       - name: Provision infrastructure without existing state
-        if: steps.fetch_infrastructure_remote_state.outcome == 'success'
+        if: steps.fetch_infrastructure_remote_state.outcome != 'success'
         run: |
           set -a && source ${{ github.workspace }}/credentials.env && set +a
 
