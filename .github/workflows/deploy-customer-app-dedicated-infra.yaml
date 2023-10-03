@@ -68,7 +68,7 @@ jobs:
 
           echo "Trying to fetch backend bucket remote state if exists..."
           cd ${{ github.workspace }}/terraform-customer-live-repo/tfstate_backend
-          gsutil cat gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/terraform.tfstate > remote_state.tfstate
+          gsutil cat gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/backend_bucket.tfstate > backend_bucket.tfstate
 
       - name: Setup backend bucket without pre-configured remote state
         if: steps.fetch_backend_bucket_remote_state.outcome != 'success'
@@ -82,8 +82,7 @@ jobs:
           echo "No pre-configured terraform.tfstate found for backend bucket."
           terraform apply -auto-approve
           echo "New state will be uploaded."
-          ls -la
-          gsutil cp ${{ github.workspace }}/terraform-customer-live-repo/tfstate_backend/terraform.tfstate gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/terraform.tfstate
+          gsutil cp ./terraform.tfstate gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/backend_bucket.tfstate
 
       - name: Setup backend bucket with pre-configured remote state
         if: steps.fetch_backend_bucket_remote_state.outcome == 'success'
@@ -95,11 +94,21 @@ jobs:
           cd ${{ github.workspace }}/terraform-customer-live-repo/tfstate_backend
           terraform init
           echo "Pre-configured terraform.tfstate found and will be used as current state."
-          terraform apply -auto-approve -state remote_state.tfstate
-          ls -la
-          gsutil cp ${{ github.workspace }}/terraform-customer-live-repo/tfstate_backend/remote_state.tfstate gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/terraform.tfstate
+          terraform apply -auto-approve -state backend_bucket.tfstate
+          gsutil cp ./backend_bucket.tfstate gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/backend_bucket.tfstate
 
-      - name: Provision infrastructure
+      - name: Fetch infrastructure remote state if exists
+        id: fetch_infrastructure_remote_state
+        continue-on-error: true
+        run: |
+          set -a && source ${{ github.workspace }}/credentials.env && set +a
+
+          echo "Trying to fetch infrastructure remote state if exists..."
+          cd ${{ github.workspace }}/terraform-customer-live-repo/tfstate_backend
+          gsutil cat gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/infrastructure.tfstate > infrastructure.tfstate
+
+      - name: Provision infrastructure with existing state
+        if: steps.fetch_infrastructure_remote_state.outcome == 'success'
         run: |
           set -a && source ${{ github.workspace }}/credentials.env && set +a
 
@@ -107,7 +116,24 @@ jobs:
           source scripts/get_backend_bucket.sh
           cd environments/customer
           terraform init -backend-config ../../backend_config.tf
-          terraform apply -auto-approve
+          terraform apply -auto-approve -state infrastructure.tfstate
+
+          echo "Updating remote state..."
+          gsutil cp ./terraform.tfstate gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/backend_bucket.tfstate
+
+      - name: Provision infrastructure without existing state
+        if: steps.fetch_infrastructure_remote_state.outcome == 'success'
+        run: |
+          set -a && source ${{ github.workspace }}/credentials.env && set +a
+
+          cd ${{ github.workspace }}/terraform-customer-live-repo
+          source scripts/get_backend_bucket.sh
+          cd environments/customer
+          terraform init -backend-config ../../backend_config.tf
+          terraform apply -auto-approve -state infrastructure.tfstate
+
+          echo "Updating remote state..."
+          gsutil cp ./infrastructure.tfstate gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/infrastructure.tfstate
 
   # generate_deployment_files:
   #   runs-on: ubuntu-22.04
