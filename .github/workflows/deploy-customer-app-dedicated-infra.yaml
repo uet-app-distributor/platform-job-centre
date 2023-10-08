@@ -62,9 +62,7 @@ jobs:
         id: fetch_backend_bucket_remote_state
         continue-on-error: true
         run: |
-          set -a
-          source ${{ github.workspace }}/credentials.env
-          set +a
+          set -a && source ${{ github.workspace }}/credentials.env && set +a
 
           echo "Trying to fetch backend bucket remote state if exists..."
           cd ${{ github.workspace }}/terraform-customer-live-repo/tfstate_backend
@@ -73,9 +71,7 @@ jobs:
       - name: Setup backend bucket without pre-configured remote state
         if: steps.fetch_backend_bucket_remote_state.outcome != 'success'
         run: |
-          set -a
-          source ${{ github.workspace }}/credentials.env
-          set +a
+          set -a && source ${{ github.workspace }}/credentials.env && set +a
 
           cd ${{ github.workspace }}/terraform-customer-live-repo/tfstate_backend
           terraform init
@@ -87,9 +83,7 @@ jobs:
       - name: Setup backend bucket with pre-configured remote state
         if: steps.fetch_backend_bucket_remote_state.outcome == 'success'
         run: |
-          set -a
-          source ${{ github.workspace }}/credentials.env
-          set +a
+          set -a && source ${{ github.workspace }}/credentials.env && set +a
 
           cd ${{ github.workspace }}/terraform-customer-live-repo/tfstate_backend
           terraform init
@@ -103,8 +97,13 @@ jobs:
         run: |
           set -a && source ${{ github.workspace }}/credentials.env && set +a
 
+          cd ${{ github.workspace }}/terraform-customer-live-repo/environments/customer
+
+          echo "Setting up backend config..."
+          bucket=$(terraform output --state ../../tfstate_backend/backend_bucket.tfstate backend_bucket_name)
+          echo "bucket = $bucket" > backend_config.tf
+
           echo "Trying to fetch infrastructure remote state if exists..."
-          cd ${{ github.workspace }}/terraform-customer-live-repo/tfstate_backend
           gsutil cat gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/infrastructure.tfstate > infrastructure.tfstate
 
       - name: Provision infrastructure with existing state
@@ -112,28 +111,24 @@ jobs:
         run: |
           set -a && source ${{ github.workspace }}/credentials.env && set +a
 
-          cd ${{ github.workspace }}/terraform-customer-live-repo
-          source scripts/get_backend_bucket.sh
-          cd environments/customer
-          terraform init -backend-config ../../backend_config.tf
+          cd ${{ github.workspace }}/terraform-customer-live-repo/environments/customer
+          terraform init -backend-config backend_config.tf
           terraform apply -auto-approve -state infrastructure.tfstate
 
           echo "Updating remote state..."
-          gsutil cp ./terraform.tfstate gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/backend_bucket.tfstate
+          gsutil cp infrastructure.tfstate gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/infrastructure.tfstate
 
       - name: Provision infrastructure without existing state
         if: steps.fetch_infrastructure_remote_state.outcome != 'success'
         run: |
           set -a && source ${{ github.workspace }}/credentials.env && set +a
 
-          cd ${{ github.workspace }}/terraform-customer-live-repo
-          source scripts/get_backend_bucket.sh
-          cd environments/customer
-          terraform init -backend-config ../../backend_config.tf
-          terraform apply -auto-approve -state infrastructure.tfstate
+          cd ${{ github.workspace }}/terraform-customer-live-repo/environments/customer
+          terraform init -backend-config backend_config.tf
+          terraform apply -auto-approve
 
-          echo "Updating remote state..."
-          gsutil cp ./infrastructure.tfstate gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/infrastructure.tfstate
+          echo "Uploading new remote state..."
+          gsutil cp terraform.tfstate gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/infrastructure.tfstate
 
   # generate_deployment_files:
   #   runs-on: ubuntu-22.04
