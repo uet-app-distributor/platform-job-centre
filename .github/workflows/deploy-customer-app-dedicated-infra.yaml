@@ -86,8 +86,7 @@ jobs:
           set -a && source ${{ github.workspace }}/credentials.env && set +a
           cd ${{ github.workspace }}/terraform-customer-live-repo/environments/customer
           echo "Setting up backend config..."
-          echo "bucket = $backend_bucket_name" > backend_config.tf
-          cat backend_config.tf
+          echo "bucket = $backend_bucket_name" > backend.config
           echo "Trying to fetch infrastructure remote state if exists..."
           gsutil cat gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/infrastructure.tfstate > infrastructure.tfstate
           echo "Infrastructure remote state downloaded successfully."
@@ -96,7 +95,7 @@ jobs:
         run: |
           set -a && source ${{ github.workspace }}/credentials.env && set +a
           cd ${{ github.workspace }}/terraform-customer-live-repo/environments/customer
-          terraform init -backend-config backend_config.tf
+          terraform init -backend-config backend.config
           terraform apply -auto-approve -state infrastructure.tfstate
           echo "Updating remote state for customer infrastructure..."
           gsutil cp infrastructure.tfstate gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/infrastructure.tfstate
