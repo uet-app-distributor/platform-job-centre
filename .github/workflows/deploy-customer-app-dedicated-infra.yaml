@@ -66,6 +66,7 @@ jobs:
           echo "Trying to fetch backend bucket remote state if exists..."
           cd ${{ github.workspace }}/terraform-customer-live-repo/tfstate_backend
           gsutil cat gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/backend_bucket.tfstate > backend_bucket.tfstate
+          echo "Backend bucket remote state downloaded successfully."
 
       - name: Setup backend bucket
         run: |
@@ -73,6 +74,8 @@ jobs:
           cd ${{ github.workspace }}/terraform-customer-live-repo/tfstate_backend
           terraform init
           terraform apply -auto-approve -state backend_bucket.tfstate
+          bucket=$(terraform output --state backend_bucket.tfstate backend_bucket_name)
+          echo "backend_bucket_name=$bucket" >> $GITHUB_ENV
           echo "Updating remote state for backend bucket..."
           gsutil cp backend_bucket.tfstate gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/backend_bucket.tfstate
 
@@ -82,12 +85,12 @@ jobs:
         run: |
           set -a && source ${{ github.workspace }}/credentials.env && set +a
           cd ${{ github.workspace }}/terraform-customer-live-repo/environments/customer
-          ls -la
           echo "Setting up backend config..."
-          bucket=$(terraform output --state ../../tfstate_backend/backend_bucket.tfstate backend_bucket_name)
-          echo "bucket = $bucket" > backend_config.tf
+          echo "bucket = $backend_bucket_name" > backend_config.tf
+          cat backend_config.tf
           echo "Trying to fetch infrastructure remote state if exists..."
           gsutil cat gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/infrastructure.tfstate > infrastructure.tfstate
+          echo "Infrastructure remote state downloaded successfully."
 
       - name: Provision customer infrastructure
         if: steps.fetch_infrastructure_remote_state.outcome == 'success'
