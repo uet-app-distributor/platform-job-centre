@@ -93,7 +93,6 @@ jobs:
           echo "Infrastructure remote state downloaded successfully."
 
       - name: Provision customer infrastructure
-        if: steps.fetch_infrastructure_remote_state.outcome == 'success'
         run: |
           set -a && source ${{ github.workspace }}/credentials.env && set +a
           cd ${{ github.workspace }}/terraform-customer-live-repo/environments/customer
