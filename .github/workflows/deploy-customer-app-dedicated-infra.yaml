@@ -63,7 +63,6 @@ jobs:
         continue-on-error: true
         run: |
           set -a && source ${{ github.workspace }}/credentials.env && set +a
-
           echo "Trying to fetch backend bucket remote state if exists..."
           cd ${{ github.workspace }}/terraform-customer-live-repo/tfstate_backend
           gsutil cat gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/backend_bucket.tfstate > backend_bucket.tfstate
@@ -71,11 +70,9 @@ jobs:
       - name: Setup backend bucket
         run: |
           set -a && source ${{ github.workspace }}/credentials.env && set +a
-
           cd ${{ github.workspace }}/terraform-customer-live-repo/tfstate_backend
           terraform init
           terraform apply -auto-approve -state backend_bucket.tfstate
-
           echo "Updating remote state for backend bucket..."
           gsutil cp backend_bucket.tfstate gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/backend_bucket.tfstate
 
@@ -84,13 +81,11 @@ jobs:
         continue-on-error: true
         run: |
           set -a && source ${{ github.workspace }}/credentials.env && set +a
-
           cd ${{ github.workspace }}/terraform-customer-live-repo/environments/customer
-
+          ls -la
           echo "Setting up backend config..."
           bucket=$(terraform output --state ../../tfstate_backend/backend_bucket.tfstate backend_bucket_name)
           echo "bucket = $bucket" > backend_config.tf
-
           echo "Trying to fetch infrastructure remote state if exists..."
           gsutil cat gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/infrastructure.tfstate > infrastructure.tfstate
 
@@ -98,11 +93,9 @@ jobs:
         if: steps.fetch_infrastructure_remote_state.outcome == 'success'
         run: |
           set -a && source ${{ github.workspace }}/credentials.env && set +a
-
           cd ${{ github.workspace }}/terraform-customer-live-repo/environments/customer
           terraform init -backend-config backend_config.tf
           terraform apply -auto-approve -state infrastructure.tfstate
-
           echo "Updating remote state for customer infrastructure..."
           gsutil cp infrastructure.tfstate gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/infrastructure.tfstate
 
