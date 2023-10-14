@@ -34,7 +34,7 @@ on:
 
 env:
   UAD_DOMAIN: uet-app-distributor.site
-  CUSTOMER_APP_ID: ${{ inputs.customer_name }}-${{ intputs.customer_app_name }}
+  CUSTOMER_APP_ID: ${{ github.event.inputs.customer_name }}-${{ github.event.inputs.customer_app_name }}
 
 jobs:
   provision_infrastructure:
