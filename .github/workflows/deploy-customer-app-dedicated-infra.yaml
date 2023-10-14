@@ -17,23 +17,24 @@ on:
         description: "gsutil URI to customer app configuration file"
         type: string
       customer_app_name:
-        description: "Name of the customer app."
+        description: "Name of the customer app"
         type: string
       fe_github_user:
-        description: "GitHub user for frontend application."
+        description: "GitHub user for frontend application"
         type: string
       fe_github_repo:
-        description: "GitHub repo for frontend application."
+        description: "GitHub repo for frontend application"
         type: string
       be_github_user:
-        description: "GitHub user for backend application."
+        description: "GitHub user for backend application"
         type: string
       be_github_repo:
-        description: "GitHub repo for backend application."
+        description: "GitHub repo for backend application"
         type: string
 
 env:
   UAD_DOMAIN: uet-app-distributor.site
+  CUSTOMER_APP_ID: ${{ inputs.customer_name }}-${{ intputs.customer_app_name }}
 
 jobs:
   provision_infrastructure:
@@ -128,7 +129,6 @@ jobs:
           cd template-generator
           pip install -r requirements.txt
           python3 main.py --app-config ${{ github.workspace }}/app_config.yaml --compose True
-          ls -la
 
       - uses: actions/upload-artifact@v3
         with:
@@ -169,7 +169,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: ${{ github.workspace }}/customer-app-frontend
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/fe-${{ inputs.customer_app_name }}:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/fe-${{ env.CUSTOMER_APP_ID }}:latest
           file: ${{ github.workspace }}/customer-app-frontend/template-generator/output-frontend-dockerfile
           push: true
 
@@ -205,6 +205,49 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: ${{ github.workspace }}/customer-app-backend
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/be-${{ inputs.customer_app_name }}:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/be-${{ env.CUSTOMER_APP_ID }}:latest
           file: ${{ github.workspace }}/customer-app-backend/template-generator/output-backend-dockerfile
           push: true
+
+  deploy_customer_apps:
+    needs: [build_frontend, build_backend]
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: deployment-artifacts
+          path: ${{ github.workspace }}/deploy-artifacts
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GOOGLE_RUNNER_CREDENTIALS }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+
+      - name: Get customer instance public IP
+        id: get_customer_instance_public_ip
+        run: |
+          gsutil cp gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/infrastructure.tfstate infrastructure.tfstate
+          PUBLIC_IP=$(terraform output -state infrastructure.tfstate customer_app_instance_public_ip)
+          echo "public_ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
+
+      - name: Send deploy artifacts to server
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ steps.get_customer_instance_public_ip.outputs.public_ip }}
+          key: ${{ secrets.CUSTOMER_INSTANCE_PRIVATE_SSH_KEY }}
+          username: ubuntu
+          source: deploy-artifacts/output-compose.yaml
+          target: /home/ubuntu
+          strip_components: 1
+
+      - name: Deploy customer applications
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ steps.get_customer_instance_public_ip.outputs.public_ip }}
+          key: ${{ secrets.CUSTOMER_INSTANCE_PRIVATE_SSH_KEY }}
+          username: ubuntu
+          script: |
+            docker compose -f /home/ubuntu/output-compose.yaml up -d
