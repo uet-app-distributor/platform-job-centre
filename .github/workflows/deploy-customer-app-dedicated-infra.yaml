@@ -137,66 +137,74 @@ jobs:
             ${{ github.workspace }}/template-generator/output-*
             ${{ github.workspace }}/.env
 
-  # deploy_customer_app:
-  #   needs: [provision_infrastructure]
-  #   runs-on: ubuntu-22.04
-  #   steps:
-  #     - name: Checkout customer app frontend repository
-  #       uses: actions/checkout@v3
-  #       with:
-  #         repository: ${{ inputs.fe_github_user }}/${{ inputs.fe_github_repo }}
-  #         path: customer-app-frontend
-  #         ref: main
+  build_frontend:
+    if: inputs.fe_github_repo != 'none' && inputs.fe_github_user != 'none'
+    needs: [provision_infrastructure, generate_deployment_files]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout customer app frontend repository
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ inputs.fe_github_user }}/${{ inputs.fe_github_repo }}
+          path: customer-app-frontend
 
-  #     - uses: actions/download-artifact@v3
-  #       with:
-  #         name: deployment-artifacts
-  #         path: ${{ github.workspace }}/customer-app-frontend
+      - uses: actions/download-artifact@v3
+        with:
+          name: deployment-artifacts
+          path: ${{ github.workspace }}/customer-app-frontend
 
-  #     - name: Set up QEMU
-  #       uses: docker/setup-qemu-action@v2
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
 
-  #     - name: Set up Docker Buildx
-  #       uses: docker/setup-buildx-action@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
-  #     - name: Login to Docker Hub
-  #       uses: docker/login-action@v2
-  #       with:
-  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
-  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-  #     - name: Build and push
-  #       uses: docker/build-push-action@v4
-  #       with:
-  #         context: ${{ github.workspace }}/customer-app-frontend
-  #         tags: ${{ secrets.DOCKERHUB_USERNAME }}/fe-${{ inputs.customer_app_name }}:latest
-  #         file: ${{ github.workspace }}/customer-app-frontend/template-generator/output-frontend-ca-dockerfile
-  #         push: true
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: ${{ github.workspace }}/customer-app-frontend
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/fe-${{ inputs.customer_app_name }}:latest
+          file: ${{ github.workspace }}/customer-app-frontend/template-generator/output-frontend-dockerfile
+          push: true
 
-  #     - name: Send job manifest file to server
-  #       uses: appleboy/scp-action@v0.1.4
-  #       with:
-  #         host: ${{ secrets.DISTRIBUTOR_INSTANCE_HOST }}
-  #         port: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_PORT }}
-  #         key: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_KEY }}
-  #         username: ${{ secrets.DISTRIBUTOR_INSTANCE_PRIMARY_USER }}
-  #         source: "customer-app-frontend/template-generator/output-frontend-ca-manifest.yaml,customer-app-frontend/template-generator/output-ca-initial-job.yaml"
-  #         target: /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}
-  #         strip_components: 2
+  build_backend:
+    if: inputs.be_github_repo != 'none' && inputs.be_github_user != 'none'
+    needs: [provision_infrastructure, generate_deployment_files]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout customer app backend repository
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ inputs.be_github_user }}/${{ inputs.be_github_repo }}
+          path: customer-app-backend
 
-  #     - name: Deploy customer initial job and application
-  #       uses: appleboy/ssh-action@v1.0.0
-  #       with:
-  #         host: ${{ secrets.DISTRIBUTOR_INSTANCE_HOST }}
-  #         port: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_PORT }}
-  #         key: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_KEY }}
-  #         username: ${{ secrets.DISTRIBUTOR_INSTANCE_PRIMARY_USER }}
-  #         script: |
-  #           ls -la /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}
-  #           microk8s kubectl apply -f /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/output-ca-initial-job.yaml
-  #           microk8s kubectl wait --for=condition=complete -f /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/output-ca-initial-job.yaml
-  #           microk8s kubectl apply -f /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/output-frontend-ca-manifest.yaml
+      - uses: actions/download-artifact@v3
+        with:
+          name: deployment-artifacts
+          path: ${{ github.workspace }}/customer-app-backend
 
-  #     - name: Access URL
-  #       run: |
-  #         echo "Access URL: https://${{ inputs.customer_app_name }}.${{ env.UAD_DOMAIN }}"
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: ${{ github.workspace }}/customer-app-backend
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/be-${{ inputs.customer_app_name }}:latest
+          file: ${{ github.workspace }}/customer-app-backend/template-generator/output-backend-dockerfile
+          push: true
