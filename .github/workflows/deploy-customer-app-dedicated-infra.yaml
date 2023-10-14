@@ -100,44 +100,42 @@ jobs:
           echo "Updating remote state for customer infrastructure..."
           gsutil cp infrastructure.tfstate gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/infrastructure.tfstate
 
-  # generate_deployment_files:
-  #   runs-on: ubuntu-22.04
-  #   steps:
-  #     - name: Authenticate to Google Cloud
-  #       uses: google-github-actions/auth@v1
-  #       with:
-  #         credentials_json: ${{ secrets.GOOGLE_RUNNER_CREDENTIALS }}
+  generate_deployment_files:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GOOGLE_RUNNER_CREDENTIALS }}
 
-  #     - name: Set up Cloud SDK
-  #       uses: google-github-actions/setup-gcloud@v1
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
 
-  #     - name: Get customer app configuration file
-  #       run: |
-  #         gsutil cat ${{ inputs.customer_app_config_blob }} > ${{ github.workspace }}/app_config.yaml
-  #         gsutil cat ${{ inputs.customer_app_config_blob }}.env > ${{ github.workspace }}/.env
+      - name: Get customer app configuration file
+        run: |
+          gsutil cp ${{ inputs.customer_app_config_blob }} app_config.yaml
+          gsutil cp ${{ inputs.customer_app_config_blob }}.env .env
 
-  #     - name: Checkout template-generator repository
-  #       uses: actions/checkout@v3
-  #       with:
-  #         repository: uet-app-distributor/template-generator
-  #         path: template-generator
-  #         ref: main
+      - name: Checkout template-generator repository
+        uses: actions/checkout@v3
+        with:
+          repository: uet-app-distributor/template-generator
+          path: template-generator
+          ref: main
 
-  #     - name: Generate Dockerfiles, initial job and manifest files
-  #       run: |
-  #         cd ${{ github.workspace }}/template-generator
-  #         pip install -r requirements.txt
-  #         python3 main.py --app-config ${{ github.workspace }}/app_config.yaml \
-  #                         --output-dockerfile ca-dockerfile \
-  #                         --output-initial-job ca-initial-job.yaml \
-  #                         --output-manifest ca-manifest.yaml
+      - name: Generate Dockerfiles, initial job and manifest files
+        run: |
+          cd template-generator
+          pip install -r requirements.txt
+          python3 main.py --app-config ${{ github.workspace }}/app_config.yaml --compose True
+          ls -la
 
-  #     - uses: actions/upload-artifact@v3
-  #       with:
-  #         name: deployment-artifacts
-  #         path: |
-  #           ${{ github.workspace }}/template-generator/output-*
-  #           ${{ github.workspace }}/.env
+      - uses: actions/upload-artifact@v3
+        with:
+          name: deployment-artifacts
+          path: |
+            ${{ github.workspace }}/template-generator/output-*
+            ${{ github.workspace }}/.env
 
   # deploy_customer_app:
   #   needs: [provision_infrastructure]
