@@ -220,6 +220,11 @@ jobs:
         run: |
           echo ${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }}
           ssh-keyscan -H ${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }} >> ${{ github.workspace }}/known_hosts
+          ssh-keyscan -H ${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }} >> /home/runner/.ssh/known_hosts
+
+          cat /home/runner/.ssh/known_hosts
+          cat ${{ github.workspace }}/known_hosts
+
           scp -v -i key.pem deploy-artifacts/template-generator/output-compose.yaml \
               -o UserKnownHostsFile=${{ github.workspace }}/known_hosts \
               ubuntu@${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }}:/home/ubuntu/compose.yml
