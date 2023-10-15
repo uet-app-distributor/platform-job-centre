@@ -218,9 +218,8 @@ jobs:
 
       - name: Send deploy artifacts to server
         run: |
-          nc -zv 54.254.13.183 22
           scp -vvv -i key.pem deploy-artifacts/template-generator/output-compose.yaml \
-              -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+              -o UserKnownHostsFile=/github/home/.ssh/known_hosts \
               ubuntu@${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }}:/home/ubuntu/compose.yml
 
       # - name: Send deploy artifacts to server
