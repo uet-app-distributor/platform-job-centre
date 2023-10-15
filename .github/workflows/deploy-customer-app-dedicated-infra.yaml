@@ -210,17 +210,25 @@ jobs:
           name: deployment-artifacts
           path: ${{ github.workspace }}/deploy-artifacts
 
-      - run: sleep 30
+      - name: Get SSH private key from global secrets
+        env:
+          SSH_KEY: ${{ secrets.CUSTOMER_INSTANCE_PRIVATE_SSH_KEY }}
+        run: |
+          echo "$SSH_KEY" > key.pem
 
       - name: Send deploy artifacts to server
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }}
-          key: ${{ secrets.CUSTOMER_INSTANCE_PRIVATE_SSH_KEY }}
-          username: ubuntu
-          source: deploy-artifacts/template-generator/output-compose.yaml
-          target: /home/ubuntu
-          strip_components: 1
+        run: |
+          scp -i key.pem deploy-artifacts/template-generator/output-compose.yaml ubuntu@${{ ${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }} }}:/home/ubuntu/compose.yml
+
+      # - name: Send deploy artifacts to server
+      #   uses: appleboy/scp-action@v0.1.4
+      #   with:
+      #     host: ${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }}
+      #     key: ${{ secrets.CUSTOMER_INSTANCE_PRIVATE_SSH_KEY }}
+      #     username: ubuntu
+      #     source: deploy-artifacts/template-generator/output-compose.yaml
+      #     target: /home/ubuntu
+      #     strip_components: 1
 
       - name: Deploy customer applications
         uses: appleboy/ssh-action@v1.0.0
