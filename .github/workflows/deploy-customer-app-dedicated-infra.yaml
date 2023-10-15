@@ -216,10 +216,12 @@ jobs:
         run: |
           echo "$SSH_KEY" > key.pem
 
-      - name: Send deploy artifacts to server
+      - name: Debugging
         run: |
-          scp -vvv -i key.pem deploy-artifacts/template-generator/output-compose.yaml \
-              -o UserKnownHostsFile=/github/home/.ssh/known_hosts \
+          echo ${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }}
+          ssh-keyscan -H ${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }} >> ${{ github.workspace }}/known_hosts
+          scp -v -i key.pem deploy-artifacts/template-generator/output-compose.yaml \
+              -o UserKnownHostsFile=${{ github.workspace }}/known_hosts \
               ubuntu@${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }}:/home/ubuntu/compose.yml
 
       # - name: Send deploy artifacts to server
