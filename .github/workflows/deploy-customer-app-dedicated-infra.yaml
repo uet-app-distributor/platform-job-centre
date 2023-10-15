@@ -210,25 +210,25 @@ jobs:
           name: deployment-artifacts
           path: ${{ github.workspace }}/deploy-artifacts
 
-      - name: Get SSH private key from global secrets
+      - name: Generate SSH private key from global secrets
         env:
           SSH_KEY: ${{ secrets.CUSTOMER_INSTANCE_PRIVATE_SSH_KEY }}
-        run: |
-          echo "$SSH_KEY" > key.pem
+        run: echo "$SSH_KEY" > key.pem && chmod 400 key.pem
 
-      - name: Debugging
+      # - name: Debugging
+      #   run: |
+      #     ssh-keyscan -H ${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }} >> ${{ github.workspace }}/known_hosts
+      #     mkdir -p /home/runner/.ssh && touch /home/runner/.ssh/known_hosts
+      #     ssh-keyscan -H ${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }} >> /home/runner/.ssh/known_hosts
+      #     scp -v -i key.pem deploy-artifacts/template-generator/output-compose.yaml \
+      #         -o UserKnownHostsFile=${{ github.workspace }}/known_hosts \
+      #         ubuntu@${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }}:/home/ubuntu/compose.yml
+
+      - name: Send deploy artifacts to server
         run: |
-          echo ${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }}
-          ssh-keyscan -H ${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }} >> ${{ github.workspace }}/known_hosts
-          mkdir -p /home/runner/.ssh
-          touch /home/runner/.ssh/known_hosts
+          mkdir -p /home/runner/.ssh && touch /home/runner/.ssh/known_hosts
           ssh-keyscan -H ${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }} >> /home/runner/.ssh/known_hosts
-
-          cat /home/runner/.ssh/known_hosts
-          cat ${{ github.workspace }}/known_hosts
-
           scp -v -i key.pem deploy-artifacts/template-generator/output-compose.yaml \
-              -o UserKnownHostsFile=${{ github.workspace }}/known_hosts \
               ubuntu@${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }}:/home/ubuntu/compose.yml
 
       # - name: Send deploy artifacts to server
