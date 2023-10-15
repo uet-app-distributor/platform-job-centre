@@ -202,6 +202,7 @@ jobs:
 
   deploy_customer_apps:
     # needs: [build_frontend, build_backend, provision_infrastructure]
+    needs: [provision_infrastructure]
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/download-artifact@v3
