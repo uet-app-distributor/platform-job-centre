@@ -210,7 +210,7 @@ jobs:
           name: deployment-artifacts
           path: ${{ github.workspace }}/deploy-artifacts
 
-      - run: ls -la ${{ github.workspace }}/deploy-artifacts/template-generator
+      - run: sleep 30
 
       - name: Send deploy artifacts to server
         uses: appleboy/scp-action@v0.1.4
