@@ -217,6 +217,7 @@ jobs:
 
       - name: Send deploy artifacts to server
         run: |
+          echo "Sleep 30 to wait for new instance ready" && sleep 30
           mkdir -p /home/runner/.ssh && touch /home/runner/.ssh/known_hosts
           ssh-keyscan -H ${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }} >> /home/runner/.ssh/known_hosts
           scp -i key.pem deploy-artifacts/template-generator/output-compose.yaml \
