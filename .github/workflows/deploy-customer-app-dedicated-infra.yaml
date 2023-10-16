@@ -113,7 +113,7 @@ jobs:
           export CF_API_KEY=${{ secrets.CLOUDFLARE_API_KEY }} \
                   CF_API_EMAIL=${{ secrets.CLOUDFLARE_API_EMAIL }}
 
-          cd platform-generatl-tools/tools/customer-app-initial-job
+          cd platform-general-tools/tools/customer-app-initial-job
           pip install -r requirements.txt
           python3 main.py
 
