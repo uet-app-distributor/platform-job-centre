@@ -92,6 +92,31 @@ jobs:
     outputs:
       customer_instance_public_ip: ${{ steps.provision_customer_infrastructure.outputs.public_ip }}
 
+  setup_dns_records:
+    runs-on: ubuntu-22.04
+    needs: [provision_infrastructure]
+    steps:
+      - name: Checkout platform-general-tools repository
+        uses: actions/checkout@v3
+        with:
+          repository: uet-app-distributor/platform-general-tools
+          path: platform-general-tools
+          ref: main
+
+      - name: Run DNS setup job
+        run: |
+          export CUSTOMER_MANAGED=true \
+                  CUSTOMER_INSTANCE_PUBLIC_IP=${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }}\
+                  CUSTOMER_NAME=${{ github.event.inputs.customer_name }} \
+                  CUSTOMER_APP=${{ github.event.inputs.customer_app_name }}
+
+          export CF_API_KEY=${{ secrets.CLOUDFLARE_API_KEY }} \
+                  CF_API_EMAIL=${{ secrets.CLOUDFLARE_API_EMAIL }}
+
+          cd platform-generatl-tools/tools/customer-app-initial-job
+          pip install -r requirements.txt
+          python3 main.py
+
   generate_deployment_files:
     runs-on: ubuntu-22.04
     steps:
@@ -202,7 +227,7 @@ jobs:
 
   deploy_customer_apps:
     # needs: [build_frontend, build_backend, provision_infrastructure]
-    needs: [provision_infrastructure]
+    needs: [provision_infrastructure, setup_dns_records]
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/download-artifact@v3
@@ -227,3 +252,8 @@ jobs:
         run: |
           ssh -i key.pem ubuntu@${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }} \
           "docker compose -f /home/ubuntu/compose.yml up -d"
+
+      - name: Access URLs
+        run: |
+          echo "Frontend URL: https://${{ env.CUSTOMER_APP_ID }}.${{ env.UAD_DOMAIN }}"
+          echo "Backend URL: https://api-${{ env.CUSTOMER_APP_ID }}.${{ env.UAD_DOMAIN }}"
