@@ -140,7 +140,7 @@ jobs:
           path: template-generator
           ref: main
 
-      - name: Generate Dockerfiles, initial job and manifest files
+      - name: Generate required deployment files
         run: |
           cd template-generator
           pip install -r requirements.txt
@@ -152,6 +152,7 @@ jobs:
           path: |
             ${{ github.workspace }}/template-generator/output-*
             ${{ github.workspace }}/.env
+            ${{ github.workspace }}/nginx.conf
 
   build_frontend:
     if: inputs.fe_github_repo != 'none' && inputs.fe_github_user != 'none'
@@ -252,6 +253,8 @@ jobs:
           ssh-keyscan -H ${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }} >> /home/runner/.ssh/known_hosts
           scp -i key.pem deploy-artifacts/template-generator/output-compose.yaml \
               ubuntu@${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }}:/home/ubuntu/compose.yml
+          scp -i key.pem deploy-artifacts/template-generator/nginx.conf \
+              ubuntu@${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }}:/opt/nginx.conf
 
       - name: Deploy customer applications
         run: |
