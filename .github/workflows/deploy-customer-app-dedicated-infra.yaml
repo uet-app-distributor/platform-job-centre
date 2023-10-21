@@ -145,124 +145,123 @@ jobs:
           cd template-generator
           pip install -r requirements.txt
           python3 main.py --app-config ${{ github.workspace }}/app_config.yaml --compose True
-          ls -la
 
       - uses: actions/upload-artifact@v3
         with:
           name: deployment-artifacts
           path: |
             ${{ github.workspace }}/template-generator/output-*
+            ${{ github.workspace }}/template-generator/nginx.conf
             ${{ github.workspace }}/.env
-            ${{ github.workspace }}/nginx.conf
 
-  # build_frontend:
-  #   if: inputs.fe_github_repo != 'none' && inputs.fe_github_user != 'none'
-  #   needs: [provision_infrastructure, generate_deployment_files]
-  #   runs-on: ubuntu-22.04
-  #   steps:
-  #     - name: Checkout customer app frontend repository
-  #       uses: actions/checkout@v3
-  #       with:
-  #         repository: ${{ inputs.fe_github_user }}/${{ inputs.fe_github_repo }}
-  #         path: customer-app-frontend
+  build_frontend:
+    if: inputs.fe_github_repo != 'none' && inputs.fe_github_user != 'none'
+    needs: [provision_infrastructure, generate_deployment_files]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout customer app frontend repository
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ inputs.fe_github_user }}/${{ inputs.fe_github_repo }}
+          path: customer-app-frontend
 
-  #     - uses: actions/download-artifact@v3
-  #       with:
-  #         name: deployment-artifacts
-  #         path: ${{ github.workspace }}/customer-app-frontend
+      - uses: actions/download-artifact@v3
+        with:
+          name: deployment-artifacts
+          path: ${{ github.workspace }}/customer-app-frontend
 
-  #     - name: Set up QEMU
-  #       uses: docker/setup-qemu-action@v2
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
 
-  #     - name: Set up Docker Buildx
-  #       uses: docker/setup-buildx-action@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
-  #     - name: Login to Docker Hub
-  #       uses: docker/login-action@v2
-  #       with:
-  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
-  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-  #     - name: Build and push
-  #       uses: docker/build-push-action@v4
-  #       with:
-  #         context: ${{ github.workspace }}/customer-app-frontend
-  #         tags: ${{ secrets.DOCKERHUB_USERNAME }}/fe-${{ env.CUSTOMER_APP_ID }}:latest
-  #         file: ${{ github.workspace }}/customer-app-frontend/template-generator/output-frontend-dockerfile
-  #         push: true
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: ${{ github.workspace }}/customer-app-frontend
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/fe-${{ env.CUSTOMER_APP_ID }}:latest
+          file: ${{ github.workspace }}/customer-app-frontend/template-generator/output-frontend-dockerfile
+          push: true
 
-  # build_backend:
-  #   if: inputs.be_github_repo != 'none' && inputs.be_github_user != 'none'
-  #   needs: [provision_infrastructure, generate_deployment_files]
-  #   runs-on: ubuntu-22.04
-  #   steps:
-  #     - name: Checkout customer app backend repository
-  #       uses: actions/checkout@v3
-  #       with:
-  #         repository: ${{ inputs.be_github_user }}/${{ inputs.be_github_repo }}
-  #         path: customer-app-backend
+  build_backend:
+    if: inputs.be_github_repo != 'none' && inputs.be_github_user != 'none'
+    needs: [provision_infrastructure, generate_deployment_files]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout customer app backend repository
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ inputs.be_github_user }}/${{ inputs.be_github_repo }}
+          path: customer-app-backend
 
-  #     - uses: actions/download-artifact@v3
-  #       with:
-  #         name: deployment-artifacts
-  #         path: ${{ github.workspace }}/customer-app-backend
+      - uses: actions/download-artifact@v3
+        with:
+          name: deployment-artifacts
+          path: ${{ github.workspace }}/customer-app-backend
 
-  #     - name: Set up QEMU
-  #       uses: docker/setup-qemu-action@v2
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
 
-  #     - name: Set up Docker Buildx
-  #       uses: docker/setup-buildx-action@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
-  #     - name: Login to Docker Hub
-  #       uses: docker/login-action@v2
-  #       with:
-  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
-  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-  #     - name: Build and push
-  #       uses: docker/build-push-action@v4
-  #       with:
-  #         context: ${{ github.workspace }}/customer-app-backend
-  #         tags: ${{ secrets.DOCKERHUB_USERNAME }}/be-${{ env.CUSTOMER_APP_ID }}:latest
-  #         file: ${{ github.workspace }}/customer-app-backend/template-generator/output-backend-dockerfile
-  #         push: true
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: ${{ github.workspace }}/customer-app-backend
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/be-${{ env.CUSTOMER_APP_ID }}:latest
+          file: ${{ github.workspace }}/customer-app-backend/template-generator/output-backend-dockerfile
+          push: true
 
-  # deploy_customer_apps:
-  #   needs:
-  #     [
-  #       build_frontend,
-  #       build_backend,
-  #       provision_infrastructure,
-  #       setup_dns_records,
-  #     ]
-  #   runs-on: ubuntu-22.04
-  #   steps:
-  #     - uses: actions/download-artifact@v3
-  #       with:
-  #         name: deployment-artifacts
-  #         path: ${{ github.workspace }}/deploy-artifacts
+  deploy_customer_apps:
+    needs:
+      [
+        build_frontend,
+        build_backend,
+        provision_infrastructure,
+        setup_dns_records,
+      ]
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: deployment-artifacts
+          path: ${{ github.workspace }}/deploy-artifacts
 
-  #     - name: Generate SSH private key from global secrets
-  #       env:
-  #         SSH_KEY: ${{ secrets.CUSTOMER_INSTANCE_PRIVATE_SSH_KEY }}
-  #       run: echo "$SSH_KEY" > key.pem && chmod 400 key.pem
+      - name: Generate SSH private key from global secrets
+        env:
+          SSH_KEY: ${{ secrets.CUSTOMER_INSTANCE_PRIVATE_SSH_KEY }}
+        run: echo "$SSH_KEY" > key.pem && chmod 400 key.pem
 
-  #     - name: Send deploy artifacts to server
-  #       run: |
-  #         echo "Sleep 30 to wait for new instance ready" && sleep 30
-  #         mkdir -p /home/runner/.ssh && touch /home/runner/.ssh/known_hosts
-  #         ssh-keyscan -H ${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }} >> /home/runner/.ssh/known_hosts
-  #         scp -i key.pem deploy-artifacts/template-generator/output-compose.yaml \
-  #             ubuntu@${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }}:/home/ubuntu/compose.yml
-  #         scp -i key.pem deploy-artifacts/template-generator/nginx.conf \
-  #             ubuntu@${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }}:/opt/nginx.conf
+      - name: Send deploy artifacts to server
+        run: |
+          echo "Sleep 30 to wait for new instance ready" && sleep 30
+          mkdir -p /home/runner/.ssh && touch /home/runner/.ssh/known_hosts
+          ssh-keyscan -H ${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }} >> /home/runner/.ssh/known_hosts
+          scp -i key.pem deploy-artifacts/template-generator/output-compose.yaml \
+              ubuntu@${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }}:/home/ubuntu/compose.yml
+          scp -i key.pem deploy-artifacts/template-generator/nginx.conf \
+              ubuntu@${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }}:/opt/nginx.conf
 
-  #     - name: Deploy customer applications
-  #       run: |
-  #         ssh -i key.pem ubuntu@${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }} \
-  #         "docker compose -f /home/ubuntu/compose.yml up -d"
+      - name: Deploy customer applications
+        run: |
+          ssh -i key.pem ubuntu@${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }} \
+          "docker compose -f /home/ubuntu/compose.yml up -d"
 
-  #     - name: Access URLs
-  #       run: |
-  #         echo "Frontend URL: https://${{ env.CUSTOMER_APP_ID }}.${{ env.UAD_DOMAIN }}"
-  #         echo "Backend URL: https://api-${{ env.CUSTOMER_APP_ID }}.${{ env.UAD_DOMAIN }}"
+      - name: Access URLs
+        run: |
+          echo "Frontend URL: https://${{ env.CUSTOMER_APP_ID }}.${{ env.UAD_DOMAIN }}"
+          echo "Backend URL: https://api-${{ env.CUSTOMER_APP_ID }}.${{ env.UAD_DOMAIN }}"
