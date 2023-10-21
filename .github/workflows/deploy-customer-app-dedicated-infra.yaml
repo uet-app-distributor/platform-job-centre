@@ -151,7 +151,6 @@ jobs:
           name: deployment-artifacts
           path: |
             ${{ github.workspace }}/template-generator/output-*
-            ${{ github.workspace }}/template-generator/nginx.conf
             ${{ github.workspace }}/.env
 
   build_frontend:
@@ -253,8 +252,8 @@ jobs:
           ssh-keyscan -H ${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }} >> /home/runner/.ssh/known_hosts
           scp -i key.pem deploy-artifacts/template-generator/output-compose.yaml \
               ubuntu@${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }}:/home/ubuntu/compose.yml
-          scp -i key.pem deploy-artifacts/template-generator/nginx.conf \
-              ubuntu@${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }}:/opt/nginx.conf
+          scp -i key.pem deploy-artifacts/template-generator/output-nginx.conf \
+              ubuntu@${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }}:/home/ubuntu/nginx.conf
 
       - name: Deploy customer applications
         run: |
