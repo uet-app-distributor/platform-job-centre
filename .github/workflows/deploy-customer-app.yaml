@@ -68,6 +68,38 @@ jobs:
             ${{ github.workspace }}/template-generator/output-*
             ${{ github.workspace }}/.env
 
+  deploy_shared_resources:
+    needs: [generate_deployment_files]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Download deployment artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: deployment-artifacts
+          path: ${{ github.workspace }}/shared_resources
+
+      - name: Send job manifest file to server
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.DISTRIBUTOR_INSTANCE_HOST }}
+          port: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_PORT }}
+          key: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_KEY }}
+          username: ${{ secrets.DISTRIBUTOR_INSTANCE_PRIMARY_USER }}
+          source: "shared_resources/template-generator/output-ca-initial-job.yaml"
+          target: /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}
+          strip_components: 2
+
+      - name: Deploy customer initial job and application
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.DISTRIBUTOR_INSTANCE_HOST }}
+          port: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_PORT }}
+          key: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_KEY }}
+          username: ${{ secrets.DISTRIBUTOR_INSTANCE_PRIMARY_USER }}
+          script: |
+            microk8s kubectl apply -f /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/output-ca-initial-job.yaml
+            microk8s kubectl wait --for=condition=complete -f /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/output-ca-initial-job.yaml
+
   deploy_frontend:
     if: inputs.fe_github_repo != 'none' && inputs.fe_github_user != 'none'
     needs: [generate_deployment_files]
@@ -124,7 +156,6 @@ jobs:
           key: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_KEY }}
           username: ${{ secrets.DISTRIBUTOR_INSTANCE_PRIMARY_USER }}
           script: |
-            ls -la /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}
             microk8s kubectl apply -f /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/output-ca-initial-job.yaml
             microk8s kubectl wait --for=condition=complete -f /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/output-ca-initial-job.yaml
             microk8s kubectl apply -f /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/output-frontend-ca-manifest.yaml
