@@ -115,10 +115,12 @@ jobs:
         with:
           name: deployment-artifacts
           path: ${{ github.workspace }}/customer-app-frontend
-      
+
       - name: Move environment file to repo directory if exists
         continue-on-error: true
-        run: ls -la
+        run: |
+          ls -la
+          ls -la ${{ github.workspace }}/customer-app-frontend
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
