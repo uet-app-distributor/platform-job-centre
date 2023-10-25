@@ -52,14 +52,11 @@ jobs:
           path: template-generator
           ref: main
 
-      - name: Generate Dockerfiles, initial job and manifest files
+      - name: Generate deployment files
         run: |
           cd ${{ github.workspace }}/template-generator
           pip install -r requirements.txt
-          python3 main.py --app-config ${{ github.workspace }}/app_config.yaml \
-                          --output-dockerfile ca-dockerfile \
-                          --output-initial-job ca-initial-job.yaml \
-                          --output-manifest ca-manifest.yaml
+          python3 main.py --app-config ${{ github.workspace }}/app_config.yaml
 
       - uses: actions/upload-artifact@v3
         with:
@@ -85,7 +82,7 @@ jobs:
           port: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_PORT }}
           key: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_KEY }}
           username: ${{ secrets.DISTRIBUTOR_INSTANCE_PRIMARY_USER }}
-          source: "shared_resources/template-generator/output-ca-initial-job.yaml"
+          source: "shared_resources/template-generator/output-initial-job, shared_resources/template-generator/output-shared-resources.yaml"
           target: /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}
           strip_components: 2
 
@@ -97,12 +94,13 @@ jobs:
           key: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_KEY }}
           username: ${{ secrets.DISTRIBUTOR_INSTANCE_PRIMARY_USER }}
           script: |
-            microk8s kubectl apply -f /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/output-ca-initial-job.yaml
-            microk8s kubectl wait --for=condition=complete -f /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/output-ca-initial-job.yaml
+            microk8s kubectl apply -f /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/output-shared-resources.yaml
+            microk8s kubectl apply -f /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/output-initial-job
+            microk8s kubectl wait --for=condition=complete -f /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/output-initial-job
 
   deploy_frontend:
     if: inputs.fe_github_repo != 'none' && inputs.fe_github_user != 'none'
-    needs: [generate_deployment_files]
+    needs: [deploy_shared_resources]
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout customer app frontend repository
@@ -112,7 +110,8 @@ jobs:
           path: customer-app-frontend
           ref: main
 
-      - uses: actions/download-artifact@v3
+      - name: Download deployment manifests
+        uses: actions/download-artifact@v3
         with:
           name: deployment-artifacts
           path: ${{ github.workspace }}/customer-app-frontend
@@ -134,7 +133,7 @@ jobs:
         with:
           context: ${{ github.workspace }}/customer-app-frontend
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/fe-${{ inputs.customer_app_name }}:latest
-          file: ${{ github.workspace }}/customer-app-frontend/template-generator/output-frontend-ca-dockerfile
+          file: ${{ github.workspace }}/customer-app-frontend/template-generator/output-frontend-dockerfile
           push: true
 
       - name: Send job manifest file to server
@@ -144,11 +143,11 @@ jobs:
           port: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_PORT }}
           key: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_KEY }}
           username: ${{ secrets.DISTRIBUTOR_INSTANCE_PRIMARY_USER }}
-          source: "customer-app-frontend/template-generator/output-frontend-ca-manifest.yaml,customer-app-frontend/template-generator/output-ca-initial-job.yaml"
+          source: "customer-app-frontend/template-generator/output-frontend-manifest"
           target: /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}
           strip_components: 2
 
-      - name: Deploy customer initial job and application
+      - name: Deploy customer frontend application
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.DISTRIBUTOR_INSTANCE_HOST }}
@@ -156,17 +155,15 @@ jobs:
           key: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_KEY }}
           username: ${{ secrets.DISTRIBUTOR_INSTANCE_PRIMARY_USER }}
           script: |
-            microk8s kubectl apply -f /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/output-ca-initial-job.yaml
-            microk8s kubectl wait --for=condition=complete -f /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/output-ca-initial-job.yaml
-            microk8s kubectl apply -f /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/output-frontend-ca-manifest.yaml
+            microk8s kubectl apply -f /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/output-frontend-manifest
 
       - name: Access URL
         run: |
-          echo "Access URL: https://${{ inputs.customer_app_name }}.${{ env.UAD_DOMAIN }}"
+          echo "Frontend URL: https://${{ inputs.customer_app_name }}.${{ env.UAD_DOMAIN }}"
 
   deploy_backend:
     if: inputs.be_github_repo != 'none' && inputs.be_github_user != 'none'
-    needs: [generate_deployment_files]
+    needs: [deploy_shared_resources]
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout customer app backend repository
@@ -198,7 +195,7 @@ jobs:
         with:
           context: ${{ github.workspace }}/customer-app-backend
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/be-${{ inputs.customer_app_name }}:latest
-          file: ${{ github.workspace }}/customer-app-backend/template-generator/output-backend-ca-dockerfile
+          file: ${{ github.workspace }}/customer-app-backend/template-generator/output-backend-dockerfile
           push: true
 
       - name: Send job manifest file to server
@@ -208,11 +205,11 @@ jobs:
           port: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_PORT }}
           key: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_KEY }}
           username: ${{ secrets.DISTRIBUTOR_INSTANCE_PRIMARY_USER }}
-          source: "customer-app-backend/template-generator/output-ca-initial-job.yaml,customer-app-backend/template-generator/output-backend-ca-manifest.yaml"
+          source: "customer-app-backend/template-generator/output-backend-manifest"
           target: /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}
           strip_components: 2
 
-      - name: Deploy customer initial job and application
+      - name: Deploy customer backend application
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.DISTRIBUTOR_INSTANCE_HOST }}
@@ -220,6 +217,4 @@ jobs:
           key: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_KEY }}
           username: ${{ secrets.DISTRIBUTOR_INSTANCE_PRIMARY_USER }}
           script: |
-            microk8s kubectl apply -f  /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/output-ca-initial-job.yaml
-            microk8s kubectl wait --for=condition=complete -f /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/output-ca-initial-job.yaml
-            microk8s kubectl apply -f  /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/output-backend-ca-manifest.yaml
+            microk8s kubectl apply -f  /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/output-backend-manifest
