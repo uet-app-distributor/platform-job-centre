@@ -115,6 +115,10 @@ jobs:
         with:
           name: deployment-artifacts
           path: ${{ github.workspace }}/customer-app-frontend
+      
+      - name: Move environment file to repo directory if exists
+        continue-on-error: true
+        run: ls -la
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -218,3 +222,7 @@ jobs:
           username: ${{ secrets.DISTRIBUTOR_INSTANCE_PRIMARY_USER }}
           script: |
             microk8s kubectl apply -f  /tmp/customer_app_manifest/${{ github.run_id }}/${{ github.run_number }}/output-backend-manifest
+
+      - name: Access URL
+        run: |
+          echo "Backend URL: https://api-${{ inputs.customer_app_name }}.${{ env.UAD_DOMAIN }}"
