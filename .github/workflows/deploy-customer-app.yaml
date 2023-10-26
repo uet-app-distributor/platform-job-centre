@@ -4,25 +4,29 @@ run-name: Deploy customer application
 on:
   workflow_dispatch:
     inputs:
+      customer_name:
+        description: "Name of the customer"
+        type: string
+        required: true
       customer_app_blob:
-        description: "gsutil URI of customer app config blob object."
+        description: "gsutil URI of customer app config blob object"
         type: string
         required: true
       customer_app_name:
-        description: "Name of the customer app."
+        description: "Name of the customer app"
         type: string
         required: true
       fe_github_user:
-        description: "GitHub user for frontend application."
+        description: "GitHub user for frontend application"
         type: string
       fe_github_repo:
-        description: "GitHub repo for frontend application."
+        description: "GitHub repo for frontend application"
         type: string
       be_github_user:
-        description: "GitHub user for backend application."
+        description: "GitHub user for backend application"
         type: string
       be_github_repo:
-        description: "GitHub repo for backend application."
+        description: "GitHub repo for backend application"
         type: string
 
 env:
@@ -165,7 +169,7 @@ jobs:
 
       - name: Access URL
         run: |
-          echo "Frontend URL: https://${{ inputs.customer_app_name }}.${{ env.UAD_DOMAIN }}"
+          echo "Frontend URL: https://${{ inputs.customer_name }}-${{ inputs.customer_app_name }}.${{ env.UAD_DOMAIN }}"
 
   deploy_backend:
     if: inputs.be_github_repo != 'none' && inputs.be_github_user != 'none'
@@ -227,4 +231,4 @@ jobs:
 
       - name: Access URL
         run: |
-          echo "Backend URL: https://api-${{ inputs.customer_app_name }}.${{ env.UAD_DOMAIN }}"
+          echo "Backend URL: https://api-${{ inputs.customer_name }}-${{ inputs.customer_app_name }}.${{ env.UAD_DOMAIN }}"
