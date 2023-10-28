@@ -1,0 +1,42 @@
+name: Deploy Appsmith
+run-name: Deploy Appsmith
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout platform-general-tools repository
+        uses: actions/checkout@v3
+        with:
+          repository: uet-app-distributor/platform-general-tools
+          ref: UAD-66_Implement-log-management-solution
+          path: tools
+
+      - name: Send values.yaml file to server
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.DISTRIBUTOR_INSTANCE_HOST }}
+          port: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_PORT }}
+          key: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_KEY }}
+          username: ${{ secrets.DISTRIBUTOR_INSTANCE_PRIMARY_USER }}
+          source: "tools/manifests/observability/*"
+          target: /tmp/observability
+          strip_components: 2
+
+      - name: Deploy CRDs and ECK operator
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.DISTRIBUTOR_INSTANCE_HOST }}
+          port: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_PORT }}
+          key: ${{ secrets.DISTRIBUTOR_INSTANCE_SSH_KEY }}
+          username: ${{ secrets.DISTRIBUTOR_INSTANCE_PRIMARY_USER }}
+          script: |
+            microk8s kubectl apply -f https://download.elastic.co/downloads/eck/2.9.0/crds.yaml
+            microk8s kubectl apply -f https://download.elastic.co/downloads/eck/2.9.0/operator.yaml
+
+            microk8s kubectl apply -f /tmp/observability/shared_resources/shared.yaml
+            microk8s kubectl apply -f /tmp/observability/efk/elasticsearch.yaml
+            microk8s kubectl apply -f /tmp/observability/efk/kibana.yaml
