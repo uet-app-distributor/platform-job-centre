@@ -1,5 +1,5 @@
-name: Deploy Appsmith
-run-name: Deploy Appsmith
+name: Deploy EFK Stack
+run-name: Deploy EFK Stack
 
 on:
   workflow_dispatch:
