@@ -15,7 +15,7 @@ jobs:
           ref: UAD-66_Implement-log-management-solution
           path: tools
 
-      - name: Send values.yaml file to server
+      - name: Send manifest files to server
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.DISTRIBUTOR_INSTANCE_HOST }}
