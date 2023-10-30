@@ -1,5 +1,5 @@
-name: Deploy customer application
-run-name: Deploy customer application
+name: Deploy Customer Application
+run-name: Deploy Customer Application
 
 on:
   workflow_dispatch:

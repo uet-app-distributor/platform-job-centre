@@ -1,5 +1,5 @@
-name: Decommission platform infrastructure
-run-name: Decommission platform infrastructure
+name: Decommission Platform Infrastructure
+run-name: Decommission Platform Infrastructure
 
 on:
   workflow_dispatch:

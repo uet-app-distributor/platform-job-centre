@@ -42,4 +42,4 @@ jobs:
             microk8s kubectl apply -f /tmp/observability/efk/kibana.yaml\
 
             microk8s helm repo add fluent https://fluent.github.io/helm-charts
-            microk8s helm upgrade --install fluent-bit fluent/fluent-bit
+            microk8s helm upgrade --install fluent-bit fluent/fluent-bit --values /tmp/observability/efk/fluentbit-values.yaml --namespace observability

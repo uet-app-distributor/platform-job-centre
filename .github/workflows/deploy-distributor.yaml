@@ -1,5 +1,5 @@
-name: Deploy app distributor
-run-name: Deploy app distributor
+name: Deploy Distributor
+run-name: Deploy Distributor
 
 on:
   workflow_dispatch:
