@@ -12,7 +12,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: uet-app-distributor/platform-general-tools
-          ref: UAD-66_Implement-log-management-solution
+          ref: main
           path: tools
 
       - name: Send manifest files to server
