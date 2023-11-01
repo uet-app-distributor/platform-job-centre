@@ -39,7 +39,10 @@ jobs:
 
             microk8s kubectl apply -f /tmp/observability/shared_resources/shared.yaml
             microk8s kubectl apply -f /tmp/observability/efk/elasticsearch.yaml
-            microk8s kubectl apply -f /tmp/observability/efk/kibana.yaml\
+            microk8s kubectl apply -f /tmp/observability/efk/kibana.yaml
 
-            microk8s helm repo add fluent https://fluent.github.io/helm-charts
-            microk8s helm upgrade --install fluent-bit fluent/fluent-bit --values /tmp/observability/efk/fluentbit-values.yaml --namespace observability
+            microk8s helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+            microk8s helm repo update
+            microk8s helm upgrade --install kube-state-metrics prometheus-community/kube-state-metrics --namespace observability
+
+            microk8s kubectl apply -f /tmp/observability/efk/elastic-agent.yaml
