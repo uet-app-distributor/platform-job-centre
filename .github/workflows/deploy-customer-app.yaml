@@ -69,7 +69,8 @@ jobs:
           name: deployment-artifacts
           path: |
             ${{ github.workspace }}/template-generator/output-*
-            ${{ github.workspace }}/*.env
+            ${{ github.workspace }}/frontend.env
+            ${{ github.workspace }}/backend.env
 
   deploy_shared_resources:
     needs: [generate_deployment_files]
