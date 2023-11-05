@@ -123,7 +123,7 @@ jobs:
           path: ${{ github.workspace }}/customer-app-frontend
 
       - name: Make .env file easier to use
-        run: mv customer-app-frontend/frontend.env customer-app-frontend/.env
+        run: mv ${{ github.workspace }}/customer-app-frontend/frontend.env ${{ github.workspace }}/customer-app-frontend/.env
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -189,7 +189,10 @@ jobs:
           path: ${{ github.workspace }}/customer-app-backend
 
       - name: Make .env easier to use
-        run: mv customer-app-backend/backend.env customer-app-backend/.env
+        run: |
+          ls -la 
+          ls -la ${{ github.workspace }}/customer-app-backend
+          mv ${{ github.workspace }}/customer-app-backend/backend.env ${{ github.workspace }}/customer-app-backend/.env
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
