@@ -46,8 +46,9 @@ jobs:
 
       - name: Get customer app configuration file
         run: |
-          gsutil cat ${{ inputs.customer_app_blob }} > ${{ github.workspace }}/app_config.yaml
-          gsutil cat ${{ inputs.customer_app_blob }}.env > ${{ github.workspace }}/.env
+          gsutil cp ${{ inputs.customer_app_blob }} ${{ github.workspace }}/app_config.yaml
+          gsutil cp ${{ inputs.customer_app_blob }}.frontend.env ${{ github.workspace }}/frontend.env
+          gsutil cp ${{ inputs.customer_app_blob }}.backend.env ${{ github.workspace }}/backend.env
 
       - name: Checkout template-generator repository
         uses: actions/checkout@v3
@@ -67,7 +68,7 @@ jobs:
           name: deployment-artifacts
           path: |
             ${{ github.workspace }}/template-generator/output-*
-            ${{ github.workspace }}/.env
+            ${{ github.workspace }}/*.env
 
   deploy_shared_resources:
     needs: [generate_deployment_files]
@@ -120,11 +121,8 @@ jobs:
           name: deployment-artifacts
           path: ${{ github.workspace }}/customer-app-frontend
 
-      - name: Move environment file to repo directory if exists
-        continue-on-error: true
-        run: |
-          ls -la
-          ls -la ${{ github.workspace }}/customer-app-frontend
+      - name: Make .env file easier to use
+        run: mv customer-app-frontend/frontend.env customer-app-frontend/.env
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -183,10 +181,14 @@ jobs:
           path: customer-app-backend
           ref: main
 
-      - uses: actions/download-artifact@v3
+      - name: Download deployment artifacts
+        uses: actions/download-artifact@v3
         with:
           name: deployment-artifacts
           path: ${{ github.workspace }}/customer-app-backend
+
+      - name: Make .env easier to use
+        run: mv customer-app-backend/backend.env customer-app-backend/.env
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
