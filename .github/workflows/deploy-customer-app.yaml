@@ -44,12 +44,16 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v1
 
-      - name: Get customer app configuration file
-        continue-on-error: true
-        run: |
-          gsutil cp ${{ inputs.customer_app_blob }} ${{ github.workspace }}/app_config.yaml
-          gsutil cp ${{ inputs.customer_app_blob }}.frontend.env ${{ github.workspace }}/frontend.env
-          gsutil cp ${{ inputs.customer_app_blob }}.backend.env ${{ github.workspace }}/backend.env
+      - name: Download customer app configuration file
+        run: gsutil cp ${{ inputs.customer_app_blob }} ${{ github.workspace }}/app_config.yaml
+
+      - name: Download frontend .env file
+        if: inputs.fe_github_repo != 'none' && inputs.fe_github_user != 'none'
+        run: gsutil cp ${{ inputs.customer_app_blob }}.frontend.env ${{ github.workspace }}/frontend.env
+
+      - name: Download backend .env file
+        if: inputs.be_github_repo != 'none' && inputs.be_github_user != 'none'
+        run: gsutil cp ${{ inputs.customer_app_blob }}.frontend.env ${{ github.workspace }}/backend.env
 
       - name: Checkout template-generator repository
         uses: actions/checkout@v3
