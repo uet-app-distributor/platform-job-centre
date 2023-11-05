@@ -53,7 +53,7 @@ jobs:
 
       - name: Download backend .env file
         if: inputs.be_github_repo != 'none' && inputs.be_github_user != 'none'
-        run: gsutil cp ${{ inputs.customer_app_blob }}.frontend.env ${{ github.workspace }}/backend.env
+        run: gsutil cp ${{ inputs.customer_app_blob }}.backend.env ${{ github.workspace }}/backend.env
 
       - name: Checkout template-generator repository
         uses: actions/checkout@v3
@@ -64,9 +64,7 @@ jobs:
 
       - name: Generate deployment files
         run: |
-          ls -la
           cd ${{ github.workspace }}/template-generator
-          ls -la
           pip install -r requirements.txt
           python3 main.py --app-config ${{ github.workspace }}/app_config.yaml
 
