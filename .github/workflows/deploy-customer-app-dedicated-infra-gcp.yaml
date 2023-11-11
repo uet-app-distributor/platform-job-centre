@@ -259,7 +259,7 @@ jobs:
               customer@${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }}:/home/customer/compose.yml
           scp -i key.pem deploy-artifacts/template-generator/output-nginx.conf \
               customer@${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }}:/home/customer/nginx.conf
-          scp -i key.pem deploy-artifacts/template-generator/verify_dependencies.sh \
+          scp -i key.pem deploy-artifacts/template-generator/scripts/verify_dependencies.sh \
               customer@${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }}:/home/customer/verify_dependencies.sh
 
       - name: Deploy customer applications
