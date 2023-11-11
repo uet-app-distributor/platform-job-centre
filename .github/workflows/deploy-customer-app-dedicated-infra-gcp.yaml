@@ -77,7 +77,7 @@ jobs:
           terraform apply -auto-approve -state backend_bucket.tfstate
 
           backend_bucket=$(terraform output --state backend_bucket.tfstate backend_bucket_name)
-          echo "bucket = $backend_bucket" > ../environments/customer/backend.config
+          echo "bucket = $backend_bucket" > ../customer/backend.config
 
           echo "Updating remote state for backend bucket..."
           gsutil cp backend_bucket.tfstate gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/backend_bucket.tfstate
@@ -86,7 +86,7 @@ jobs:
         id: provision_customer_infrastructure
         run: |
           set -a && source ${{ github.workspace }}/credentials.env && set +a
-          cd terraform-customer-live-repo-gcp/environments/customer
+          cd terraform-customer-live-repo-gcp/customer
 
           terraform init -backend-config backend.config
           terraform apply -auto-approve
