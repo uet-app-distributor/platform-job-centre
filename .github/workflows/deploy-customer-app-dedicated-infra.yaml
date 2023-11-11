@@ -253,7 +253,7 @@ jobs:
           scp -i key.pem deploy-artifacts/template-generator/output-compose.yaml \
               ubuntu@${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }}:/home/ubuntu/compose.yml
           scp -i key.pem deploy-artifacts/template-generator/output-nginx.conf \
-              ubuntu@${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }}:/home/ubuntu/nginx.conf
+              ubuntu@${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }}:/tmp/nginx.conf
 
       - name: Deploy customer applications
         run: |
