@@ -64,8 +64,9 @@ jobs:
         run: |
           set -a && source ${{ github.workspace }}/credentials.env && set +a
           echo "Trying to fetch backend bucket remote state if exists..."
+
           cd terraform-customer-live-repo-gcp/tfstate_backend
-          gsutil cat gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/backend_bucket.tfstate > backend_bucket.tfstate
+          gsutil cat gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/${{ inputs.customer_app_name }}/backend_bucket.tfstate > backend_bucket.tfstate
           echo "Downloaded backend bucket remote state successfully."
 
       - name: Setup backend bucket
@@ -80,7 +81,7 @@ jobs:
           echo "bucket = $backend_bucket" > ../customer/backend.config
 
           echo "Updating remote state for backend bucket..."
-          gsutil cp backend_bucket.tfstate gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/backend_bucket.tfstate
+          gsutil cp backend_bucket.tfstate gs://uet-app-distributor/customer_apps/${{ inputs.customer_name }}/${{ inputs.customer_app_name }}/backend_bucket.tfstate
 
       - name: Provision customer infrastructure
         id: provision_customer_infrastructure
@@ -135,7 +136,8 @@ jobs:
       - name: Get customer app configuration file
         run: |
           gsutil cp ${{ inputs.customer_app_blob }} app_config.yaml
-          gsutil cp ${{ inputs.customer_app_blob }}.env .env
+          gsutil cp ${{ inputs.customer_app_blob }}.frontend.env frontend.env
+          gsutil cp ${{ inputs.customer_app_blob }}.backend.env backend.env
 
       - name: Checkout template-generator repository
         uses: actions/checkout@v3
@@ -156,7 +158,8 @@ jobs:
           path: |
             ${{ github.workspace }}/template-generator/output-*
             ${{ github.workspace }}/template-generator/scripts/*
-            ${{ github.workspace }}/.env
+            ${{ github.workspace }}/frontend.env
+            ${{ github.workspace }}/backend.env
 
   build_frontend:
     if: inputs.fe_github_repo != 'none' && inputs.fe_github_user != 'none'
