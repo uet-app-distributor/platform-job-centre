@@ -265,7 +265,7 @@ jobs:
       - name: Deploy customer applications
         run: |
           ssh -i key.pem customer@${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }} \
-          "sudo bash /home/customer/verify_dependencies.sh && docker compose -f /home/customer/compose.yml up -d"
+          "sudo bash /home/customer/verify_dependencies.sh && sudo docker compose -f /home/customer/compose.yml up -d"
 
       - name: Access URLs
         run: |
