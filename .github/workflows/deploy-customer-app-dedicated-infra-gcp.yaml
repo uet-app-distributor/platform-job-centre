@@ -255,14 +255,14 @@ jobs:
           mkdir -p /home/runner/.ssh && touch /home/runner/.ssh/known_hosts
           ssh-keyscan -H ${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }} >> /home/runner/.ssh/known_hosts
           scp -i key.pem deploy-artifacts/template-generator/output-compose.yaml \
-              ubuntu@${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }}:/home/ubuntu/compose.yml
+              customer@${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }}:/home/customer/compose.yml
           scp -i key.pem deploy-artifacts/template-generator/output-nginx.conf \
-              ubuntu@${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }}:/home/ubuntu/nginx.conf
+              customer@${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }}:/home/customer/nginx.conf
 
       - name: Deploy customer applications
         run: |
-          ssh -i key.pem ubuntu@${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }} \
-          "docker compose -f /home/ubuntu/compose.yml up -d"
+          ssh -i key.pem customer@${{ needs.provision_infrastructure.outputs.customer_instance_public_ip }} \
+          "docker compose -f /home/customer/compose.yml up -d"
 
       - name: Access URLs
         run: |
