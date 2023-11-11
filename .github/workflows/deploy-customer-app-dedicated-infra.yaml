@@ -131,7 +131,8 @@ jobs:
       - name: Get customer app configuration file
         run: |
           gsutil cp ${{ inputs.customer_app_blob }} app_config.yaml
-          gsutil cp ${{ inputs.customer_app_blob }}.env .env
+          gsutil cp ${{ inputs.customer_app_blob }}.frontend.env frontend.env
+          gsutil cp ${{ inputs.customer_app_blob }}.backend.env backend.env
 
       - name: Checkout template-generator repository
         uses: actions/checkout@v3
@@ -151,7 +152,8 @@ jobs:
           name: deployment-artifacts
           path: |
             ${{ github.workspace }}/template-generator/output-*
-            ${{ github.workspace }}/.env
+            ${{ github.workspace }}/frontend.env
+            ${{ github.workspace }}/backend.env
 
   build_frontend:
     if: inputs.fe_github_repo != 'none' && inputs.fe_github_user != 'none'
@@ -168,6 +170,9 @@ jobs:
         with:
           name: deployment-artifacts
           path: ${{ github.workspace }}/customer-app-frontend
+
+      - name: Make frontend env file accessible
+        run: mv customer-app-frontend/frontend.env customer-app-frontend/.env
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -204,6 +209,9 @@ jobs:
         with:
           name: deployment-artifacts
           path: ${{ github.workspace }}/customer-app-backend
+
+      - name: Make backend env file accessible
+        run: mv customer-app-backend/backend.env customer-app-backend/.env
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2

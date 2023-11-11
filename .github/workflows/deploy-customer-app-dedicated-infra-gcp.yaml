@@ -177,6 +177,9 @@ jobs:
           name: deployment-artifacts
           path: ${{ github.workspace }}/customer-app-frontend
 
+      - name: Make frontend env file accessible
+        run: mv customer-app-frontend/frontend.env customer-app-frontend/.env
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
 
@@ -212,6 +215,9 @@ jobs:
         with:
           name: deployment-artifacts
           path: ${{ github.workspace }}/customer-app-backend
+
+      - name: Make backend env file accessible
+        run: mv customer-app-backend/backend.env customer-app-backend/.env
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
