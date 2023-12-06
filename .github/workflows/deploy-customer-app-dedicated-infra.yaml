@@ -1,5 +1,5 @@
-name: Deploy Customer-managed Application
-run-name: Deploy Customer Application
+name: Deploy Customer-managed Application on AWS
+run-name: Deploy Customer Application on AWS
 
 on:
   workflow_dispatch:
